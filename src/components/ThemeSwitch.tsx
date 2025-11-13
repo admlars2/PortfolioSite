@@ -1,0 +1,50 @@
+import { useTheme } from '@/contexts/ThemeContext';
+import sunmoon from '@/assets/sunmoon.svg';
+
+const ThemeSwitch = () => {
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLLabelElement>) => {
+    if (e.code === 'Space' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleTheme();
+    }
+  };
+
+  return (
+    <label 
+      className="relative inline-block w-14 h-7 transition-transform duration-300 ease-in-out hover:scale-110 focus-within:scale-110 focus-within:outline-none"
+      tabIndex={0} 
+      onKeyDown={handleKeyDown}
+      aria-label="Toggle theme"
+    >
+      <input 
+        id="theme-toggle"
+        name="theme-toggle"
+        type="checkbox" 
+        checked={isDarkMode} 
+        onChange={toggleTheme} 
+        tabIndex={-1}
+        aria-hidden="true"
+        className="opacity-0 w-0 h-0"
+      />
+      <span className={`absolute inset-0 cursor-pointer rounded-full overflow-hidden select-none transition-colors duration-300 ease-in-out ${
+        isDarkMode ? 'bg-[#24305E]' : 'bg-[#A8D0E6]'
+      }`}>
+        <img 
+          src={sunmoon} 
+          alt="sunmoon" 
+          className={`absolute w-14 h-14 pointer-events-none z-10 transition-transform duration-300 ease-in-out ${
+            isDarkMode ? 'translate-x-[0.1rem] -translate-y-[2rem]' : 'translate-x-[0.2rem] -translate-y-[0.4rem]'
+          }`}
+        />
+        <span className={`absolute w-6 h-6 bg-white rounded-full top-1/2 left-0 transition-transform duration-300 ease-in-out z-10 ${
+          isDarkMode ? 'translate-x-[115%] -translate-y-1/2' : 'translate-x-[15%] -translate-y-1/2'
+        }`} />
+      </span>
+    </label>
+  );
+};
+
+export default ThemeSwitch;
