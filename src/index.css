@@ -17,6 +17,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html {
-  scroll-behavior: auto; /* Disable native smooth scroll, we use custom easing */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden; /* Only the main app container scrolls */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Prevent fixed elements from causing horizontal scroll */
+aside[class*="fixed"] {
+  contain: layout;
+}
+
+div[data-sidebar-trigger] {
+  contain: layout;
 }

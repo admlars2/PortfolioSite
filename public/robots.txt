@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://adam-larson.com/sitemap.xml

@@ -3,6 +3,7 @@
     "home": "Home",
     "about": "About",
     "projects": "Projects",
+    "skills": "Skills",
     "contact": "Contact"
   },
   "theme": {
@@ -16,6 +17,74 @@
   },
   "project": {
     "back": "Back"
+  },
+  "projects": {
+    "kanjiTrainer": {
+      "title": "Kanji Trainer for Raspberry Pi",
+      "intro": "Developed a spaced repetition application using the SM2 algorithm (SuperMemo) to help users learn Japanese kanji and words efficiently. This project was designed specifically to run on Raspberry Pi, making it an accessible learning tool for Japanese language students.",
+      "visualOverviewHeading": "Visual Overview",
+      "technicalHeading": "Technical Implementation",
+      "technicalBody": "The application was configured and optimized to run on Raspberry Pi, leveraging Linux and Python 3.11. I utilized SDL2 and SDL2-TTF for graphical rendering, which provided smooth performance on the Raspberry Pi hardware. The application integrated an SQLite database containing the top 3000 kanji with stroke order data, allowing users to practice writing kanji correctly.",
+      "developmentHeading": "Development Process",
+      "developmentBody1": "To streamline the setup process, I automated installation procedures using Poetry for dependency management. This ensured smooth installation of all required libraries and made it easy for users to get started with the application.",
+      "developmentBody2": "The spaced repetition system implemented the SM2 algorithm, which adapts learning intervals based on user performance. I implemented daily progress tracking, allowing users to see their improvement over time and maintain consistent study habits.",
+      "performanceHeading": "Performance Optimization",
+      "performanceBody": "During initial development, I encountered performance issues that affected the user experience. To address these, I reduced the polling rate and implemented a line smoothing algorithm to streamline the writing process. These optimizations resulted in a significantly faster and more responsive user experience, making the application much more enjoyable to use.",
+      "conclusion": "This project was a great learning experience in optimizing applications for resource-constrained hardware while maintaining a smooth user experience. It also deepened my understanding of spaced repetition algorithms and their practical applications in language learning.",
+      "altInitialDesign": "Kanji Trainer initial design mockup",
+      "altFrontInterface": "Kanji Trainer front interface",
+      "altBackInterface": "Kanji Trainer back interface",
+      "altExampleGif": "Kanji Trainer in use example animation"
+    },
+    "gameDevelopment": {
+      "title": "Game Development",
+      "coverAlt": "Tales of Tiny",
+      "intro1BeforeLink": "During my time in college, I decided to join the Game Development club. In the club we had a couple of workshops where we learned about different types of games as well as how to make them in unity. This game, ",
+      "intro1AfterLink": ", was the last workshop that we did which was about puzzle games.",
+      "intro2": "So, my group decided to make a Christmas themed puzzle game since it was December. First let me tell you about the game a little bit and then I will talk about the prcoess that we used to develop the game.",
+      "intro3": "The game is about a person with a multi-tool that has four main uses: blacklight, wrench, fishing rod, and a flute. Using the tool, you have to solve the puzzle in each room by finding the wishlist for that person's room. There are four rooms in total and each room focuses on two main uses of the flute. For the first room, which is the player's bedroom, you have to use the blacklight and the flute to get your cat, Tiny, out of the way. Then you enter the main house where you are able to continue your quest to find all of the wish lists.",
+      "gameplayHeading": "Gameplay Showcase",
+      "gifAlt1": "Tales of Tiny gameplay 1",
+      "gifAlt2": "Tales of Tiny gameplay 2",
+      "gifAlt3": "Tales of Tiny gameplay 3",
+      "gifAlt4": "Tales of Tiny gameplay 4",
+      "screenshotAlt": "Tales of Tiny screenshot",
+      "body1": "For this project, my main role was the level designer. So for the beginning of the project, I ended up leading the discussion about what type of game everyone wanted to make. At first, we were all giving a large range of ideas, but I had to take all of those ideas and put them together to make a game that we could feasibly finish within the 6 week time frame that we had been given.",
+      "body2": "After I collected everyone's ideas and came up with a solid idea of what we wanted to do, I got to work with creating the blacklight, which presented a couple of challenges because of the way that unity handles light. The main issue was that light in unity is that it does actually tell other objects that it is interacting with it, so I had to put together a solution using HLSL to get the effect that I wanted. Then I had to design all of the rooms including a hedge maze and a tiled train puzzle where the player has to rotate tracks and get the right solution. Finally, after putting everything together, you can find the game that my team produced at this link:",
+      "conclusion": "Overall, I had a lot of fun learning to code using HLSL and creating fun but difficult puzzles."
+    },
+    "discordBots": {
+      "title": "Discord Bots",
+      "coverAlt": "Discord Twitter Bot",
+      "intro1": "In this project, I wanted to connect Discord and Twitter, by combing the two APIs and seamlessly connecting them together. So I set off to learn how to code using the discord API. My first project was very simple and it was the implementation of a queue. Using discord commands, you could easily join and leave the queue and I used it to keep track of who was playing AmongUs at the time.",
+      "intro2": "Since that went well, I continued my journey to creating a functioning Discord bot that would send the tweets of a user defined account to the corresponding user defined text channel.",
+      "intro3": "Overall, this project ended up being a good learning experience for me because I was able to see different ways of utilizing API as well as how I could use the API without straining it too much."
+    },
+    "iotSimulator": {
+      "title": "IoT Sensor Simulator with Azure IoT Hub",
+      "intro": "Collaborated with a cross-functional team to design a robust IoT sensor simulation system for real-time monitoring. This project involved creating a comprehensive system that could simulate various sensor types and integrate seamlessly with Azure IoT Hub for cloud-based data management and visualization.",
+      "devHeading": "Development & Implementation",
+      "devBody": "I developed Python scripts to generate and send simulated sensor data (e.g., temperature, humidity) in JSON format using the MQTT protocol. The MQTT protocol was chosen for its lightweight nature and efficient message delivery, making it ideal for IoT applications. The scripts were designed to generate realistic sensor readings that could be used for testing and development purposes.",
+      "teamHeading": "Team Collaboration",
+      "teamBody": "Working closely with team members, I helped define the system architecture and establish communication protocols. We designed a scalable system that could handle multiple sensor types and data streams simultaneously. The integration with Azure IoT Hub was crucial for cloud-based data storage and management.",
+      "featuresHeading": "Features & Integration",
+      "featuresBody": "I contributed to the overall project by ensuring reliable data transmission between the simulator and Azure IoT Hub. Additionally, I assisted with implementing threshold-based alerts that would trigger notifications when sensor readings exceeded predefined limits. The system also included dashboard integration for real-time visualization, allowing users to monitor sensor data as it was being generated.",
+      "conclusion": "This project provided valuable experience in cloud computing, IoT protocols, and team collaboration. It demonstrated the importance of designing scalable systems and integrating multiple technologies to create a comprehensive solution for real-time monitoring and data management."
+    },
+    "valorantAnalysis": {
+      "title": "Data Analysis",
+      "intro1": "When I was watching the recent Valorant tournament, I was wondering what the stat distribution was by agent. All of the quickly available resources that I could find had the stats distributed by player and by match, but I was curious about which agents were doing the best overall and which ones seemed to have the most impact.",
+      "intro2BeforeLink": "So I decided to find out for myself using the data provided by ",
+      "intro2LinkText": "vlr.gg",
+      "intro2AfterLink": ". In order to do this, I wrote a script to look through all of the games that were played in a specific tournament and combine the data into one dataset. Since there were some games where the data was corrupted, I chose to omit those data points.",
+      "section2023Heading": "Here are the results of the data from Valorant Champions 2023:",
+      "table2023Title": "Valorant Champions 2023 Data",
+      "body1": "This data is very interesting to look at because you can see who the most played agent was and compare that to the overall stats that people playing the agent had. One of the most interesting points that stood out to me was the number of assists that KAY/O had compared to Sova. Although Sova's arrow and drone show teammates the exact location of where the enemies are, KAY/O ended up with more assists, despite only showing the general area of where they are.",
+      "section2022Heading": "But then I was wondering what the stats looked like for the 2022 Valorant Champions event as well, so I decided to look at that too:",
+      "table2022Title": "Valorant Champions 2022 Data",
+      "body2": "The first thing that stood out to me was the fact that chamber was picked 115 times compared to the 15 times that he was picked in the most recent Championship. It makes sense considering how much they changed the character after seeing how strong he was, but it was still interesting to see. Another datapoint that I thought was interesting was how little Reyna was picked, even though the people who played her were extremely successful with her. In both tournaments, she had the highest ACS average. But that data does need to be taken with a grain of salt because she was picked 5 times in the most recent tournament and 2 times in the earlier tournament.",
+      "conclusion": "Overall, this was a fun project, because I was able to learn how to get data from websites and I was able to actually see meta shifts from year to year in a better way than simply looking at the pickrate of agents."
+    }
   }
 }
 

@@ -21,10 +21,10 @@ export function getRouteFromFilename(filename: string): string {
 
 /**
  * Scans the projects directory and returns route information
- * Uses Vite's import.meta.glob for dynamic imports
+ * Uses Vite's import.meta.glob for lazy dynamic imports
  */
 export function getProjectRoutes() {
-  const modules = import.meta.glob<{ default: ComponentType }>('../pages/projects/*.tsx', { eager: true });
+  const modules = import.meta.glob<{ default: ComponentType }>('../pages/projects/*.tsx', { eager: false });
   
   return Object.keys(modules).map((path) => {
     const filename = path.split('/').pop() || '';

@@ -5,6 +5,7 @@ import ThemeSwitch from './ThemeSwitch';
 
 export default function Sidebar() {
   const [isHovered, setIsHovered] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState<string>('home');
   const sidebarRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export default function Sidebar() {
     { id: 'home', label: t('nav.home'), href: '/', hash: '' },
     { id: 'about', label: t('nav.about'), href: '/', hash: 'about' },
     { id: 'projects', label: t('nav.projects'), href: '/', hash: 'projects' },
+    { id: 'skills', label: t('nav.skills'), href: '/', hash: 'skills' },
     { id: 'contact', label: t('nav.contact'), href: '/', hash: 'contact' },
   ];
 
@@ -140,7 +142,17 @@ export default function Sidebar() {
   useEffect(() => {
     if (location.pathname !== '/') return;
 
+    // Check if we're restoring scroll position from a project page
+    const isRestoringScroll = sessionStorage.getItem('restoreScrollPosition');
+    if (isRestoringScroll) {
+      // Don't trigger scroll animation, let ProjectLayout handle it
+      return;
+    }
+
     const hash = location.hash.slice(1); // Remove the '#' symbol
+
+    // Keep active section in sync with URL hash when navigating
+    setActiveSectionId(hash || 'home');
     
     // Small delay to ensure DOM is ready after route change
     const timeoutId = setTimeout(() => {
@@ -155,6 +167,47 @@ export default function Sidebar() {
       clearTimeout(timeoutId);
     };
   }, [location.pathname, location.hash, scrollToSection, smoothScrollTo]);
+
+  /**
+   * Track scroll position inside the main container and update active section
+   */
+  useEffect(() => {
+    if (location.pathname !== '/') return;
+
+    const scrollContainer = document.querySelector('main') as HTMLElement | null;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const containerRect = scrollContainer.getBoundingClientRect();
+
+      let closestSectionId = 'home';
+      let closestDistance = Infinity;
+
+      for (const section of navSections) {
+        const element = document.getElementById(section.id);
+        if (!element) continue;
+
+        const rect = element.getBoundingClientRect();
+        const offset = rect.top - containerRect.top;
+        const distance = Math.abs(offset);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestSectionId = section.id;
+        }
+      }
+
+      setActiveSectionId((prev) => (prev === closestSectionId ? prev : closestSectionId));
+    };
+
+    // Initialize once on mount
+    handleScroll();
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, [location.pathname, navSections]);
 
   /**
    * Cleanup function to cancel any ongoing scroll animations
@@ -200,26 +253,27 @@ export default function Sidebar() {
     }
   }, [location.pathname, navigate, smoothScrollTo]);
 
-  const isActive = useCallback((section: typeof navSections[0]) => {
-    if (location.pathname !== '/') return false;
-    // Use React Router's location.hash for consistency
-    const currentHash = location.hash.slice(1);
-    if (!section.hash) {
-      return !currentHash || currentHash === '';
-    }
-    return currentHash === section.hash;
-  }, [location.pathname, location.hash]);
+  const isActive = useCallback(
+    (section: typeof navSections[0]) => {
+      if (location.pathname !== '/') return false;
+      return section.id === activeSectionId;
+    },
+    [location.pathname, activeSectionId],
+  );
 
   return (
     <>
       {/* Gradient indicator bar */}
       <div
         data-sidebar-trigger
-        className={`fixed left-0 top-0 h-full z-50 w-10 transition-opacity duration-300 ${
+        className={`fixed left-0 top-0 h-full z-50
+          w-10 sm:w-12 md:w-10 lg:w-16
+          transition-opacity duration-300 ${
           isHovered ? 'opacity-0' : 'opacity-100'
         }`}
         style={{
-          background: 'linear-gradient(to right, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0))'
+          background: 'linear-gradient(to right, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0)), rgba(0, 0, 0, 0)',
+          maxWidth: '100vw'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onClick={() => setIsHovered(true)}
@@ -239,10 +293,13 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-lg z-40 transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-full w-64 md:w-72 lg:w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-lg z-40 transition-transform duration-300 ease-in-out will-change-transform ${
           isHovered ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ width: '280px' }}
+        style={{
+          contain: 'layout style paint',
+          maxWidth: '100vw'
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -295,4 +352,3 @@ export default function Sidebar() {
     </>
   );
 }
-
