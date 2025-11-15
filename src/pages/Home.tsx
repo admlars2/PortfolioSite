@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ValorantStatsImage from '@/assets/images/ValorantStats.png';
 import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
@@ -26,6 +26,14 @@ interface Skill {
 }
 
 const PROJECTS: Project[] = [
+  {
+    id: 'lang-lift',
+    title: 'LangLift – Full-Stack Language Learning Platform',
+    description: 'Designed and built a full-stack language-learning platform with spaced-repetition study sets, instant "quick study" sessions, and AI-assisted moderation/verification for user-generated content (Python/FastAPI, React/TypeScript, MongoDB, GCP).',
+    route: '/lang-lift',
+    emoji: '📚',
+    imagePosition: 'left',
+  },
   {
     id: 'kanji-trainer',
     title: 'Kanji Trainer for Raspberry Pi',
@@ -148,16 +156,72 @@ const PROJECT_IMAGE_HEIGHTS = 'h-64 sm:h-72 md:h-[360px] lg:h-[420px]';
 export default function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Preload LCP image (first project image)
+  React.useEffect(() => {
+    // LangLift doesn't have an image, so skip preload for now
+    // If an image is added later, update this
+  }, []);
+
+  // Restore scroll position when returning to home page
+  // Use location.pathname as dependency to detect navigation back to home
+  React.useEffect(() => {
+    // Only restore if we're on the home page and have a saved scroll position
+    if (location.pathname !== '/') return;
+
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+
+    // Try to restore scroll position from sessionStorage
+    const savedScroll = sessionStorage.getItem('homeScrollPosition');
+    if (savedScroll) {
+      const scrollValue = parseInt(savedScroll, 10);
+      let attempts = 0;
+      const maxAttempts = 100; // Increased attempts for more reliable restoration
+      
+      // Use multiple attempts to ensure scroll restoration works
+      // This handles cases where content might still be loading
+      const restoreScroll = () => {
+        attempts++;
+        const currentScrollHeight = mainElement.scrollHeight;
+        
+        if (currentScrollHeight >= scrollValue || attempts >= maxAttempts) {
+          // Restore scroll position
+          mainElement.scrollTop = Math.min(scrollValue, currentScrollHeight);
+          // Clear the saved position after restoring
+          sessionStorage.removeItem('homeScrollPosition');
+        } else {
+          // If content isn't tall enough yet, try again
+          requestAnimationFrame(restoreScroll);
+        }
+      };
+      
+      // Start restoration after multiple animation frames to ensure DOM is ready
+      // and React Router has finished rendering
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(restoreScroll);
+        });
+      });
+    }
+  }, [location.pathname]);
 
   const handleProjectClick = (route: string) => {
+    // Use pageshow event for back/forward cache compatibility
     const mainElement = document.querySelector('main');
     if (mainElement) {
-      sessionStorage.setItem('homeScrollPosition', mainElement.scrollTop.toString());
+      // Store scroll position but don't block cache
+      try {
+        sessionStorage.setItem('homeScrollPosition', mainElement.scrollTop.toString());
+      } catch (e) {
+        // Ignore storage errors
+      }
     }
     navigate(route);
   };
 
-  const renderProjectImage = (project: Project) => {
+  const renderProjectImage = (project: Project, index: number) => {
     if (project.image) {
       const imageFit = project.imageFit || 'cover';
       const baseContainer = `w-full md:w-1/2 flex-shrink-0 overflow-hidden rounded-lg shadow-md ${PROJECT_IMAGE_HEIGHTS}`;
@@ -168,14 +232,24 @@ export default function Home() {
         ? 'max-h-full w-full object-contain'
         : 'h-full w-full object-cover';
       
+      // First image should have high priority for LCP
+      const fetchPriority = index === 0 ? 'high' : 'auto';
+      const loading = index === 0 ? 'eager' : 'lazy';
+      
+      // Use aspect ratio to prevent layout shift (16:9 is common for project images)
+      // Height is controlled by PROJECT_IMAGE_HEIGHTS class
       return (
-        <div className={containerClass}>
+        <div className={containerClass} style={{ aspectRatio: '16/9' }}>
           <img 
             src={project.image} 
             alt={project.imageAlt || project.title} 
             className={imageClass}
-            loading="lazy"
+            loading={loading}
             decoding="async"
+            fetchPriority={fetchPriority}
+            width="800"
+            height="450"
+            style={{ aspectRatio: '16/9' }}
           />
         </div>
       );
@@ -208,7 +282,7 @@ export default function Home() {
       {/* Home Section */}
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center px-4 py-12"
+        className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-gray-900"
       >
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
@@ -245,14 +319,14 @@ export default function Home() {
           </h2>
           
           <div className="space-y-10">
-            {PROJECTS.map((project) => (
+            {PROJECTS.map((project, index) => (
               <div
                 key={project.id}
                 className={`flex flex-col gap-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden md:items-stretch ${
                   project.imagePosition === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'
                 }`}
               >
-                {renderProjectImage(project)}
+                {renderProjectImage(project, index)}
                 {renderProjectContent(project)}
               </div>
             ))}

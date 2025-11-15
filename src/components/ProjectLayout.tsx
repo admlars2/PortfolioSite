@@ -11,34 +11,24 @@ export default function ProjectLayout({ children }: ProjectLayoutProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Save scroll position when component mounts (user navigated to project page)
+  // Scroll to top when project page mounts
   useEffect(() => {
     const mainElement = document.querySelector('main');
     if (mainElement) {
-      const savedScroll = sessionStorage.getItem('homeScrollPosition');
-      if (savedScroll) {
-        // Store it for restoration later
-        sessionStorage.setItem('restoreScrollPosition', savedScroll);
-      }
+      // Scroll to top immediately when entering a project page
+      // Use requestAnimationFrame to ensure it happens after React Router's navigation
+      requestAnimationFrame(() => {
+        if (mainElement) {
+          mainElement.scrollTop = 0;
+        }
+      });
     }
   }, []);
 
   const handleBack = () => {
     // Navigate to home page
+    // The Home component will handle scroll restoration via its useEffect
     navigate('/', { replace: false });
-    
-    // Restore scroll position after navigation
-    setTimeout(() => {
-      const mainElement = document.querySelector('main');
-      const scrollPosition = sessionStorage.getItem('restoreScrollPosition');
-      if (mainElement && scrollPosition) {
-        // Set scroll position directly without animation
-        mainElement.scrollTop = parseInt(scrollPosition, 10);
-        // Clean up
-        sessionStorage.removeItem('restoreScrollPosition');
-        sessionStorage.removeItem('homeScrollPosition');
-      }
-    }, 50);
   };
 
   return (

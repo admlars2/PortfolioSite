@@ -12,12 +12,17 @@ const ThemeSwitch = () => {
     }
   };
 
+  const handleLabelClick = (e: React.MouseEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    toggleTheme();
+  };
+
   return (
     <label 
       className="relative inline-block w-14 h-7 transition-transform duration-300 ease-in-out hover:scale-110 focus-within:scale-110 focus-within:outline-none cursor-pointer"
       tabIndex={0} 
       onKeyDown={handleKeyDown}
-      onClick={toggleTheme}
+      onClick={handleLabelClick}
       aria-label="Toggle theme"
     >
       <input 
@@ -26,9 +31,11 @@ const ThemeSwitch = () => {
         type="checkbox" 
         checked={isDarkMode} 
         onChange={toggleTheme} 
+        onFocus={(e) => e.target.blur()}
         tabIndex={-1}
-        aria-hidden="true"
-        className="opacity-0 w-0 h-0"
+        readOnly
+        className="sr-only"
+        aria-label="Theme toggle checkbox"
       />
       <span className={`absolute inset-0 cursor-pointer rounded-full overflow-hidden select-none transition-colors duration-300 ease-in-out will-change-[background-color] ${
         isDarkMode ? 'bg-[#24305E]' : 'bg-[#A8D0E6]'

@@ -142,10 +142,41 @@ export default function Sidebar() {
   useEffect(() => {
     if (location.pathname !== '/') return;
 
-    // Check if we're restoring scroll position from a project page
-    const isRestoringScroll = sessionStorage.getItem('restoreScrollPosition');
+    // Check if we're restoring scroll position from a project page (non-blocking)
+    let isRestoringScroll = false;
+    try {
+      isRestoringScroll = !!sessionStorage.getItem('homeScrollPosition');
+    } catch (e) {
+      // Ignore storage errors
+    }
     if (isRestoringScroll) {
-      // Don't trigger scroll animation, let ProjectLayout handle it
+      // Don't trigger scroll animation, let Home component handle scroll restoration
+      // Just update the active section based on current scroll position
+      const scrollContainer = document.querySelector('main') as HTMLElement | null;
+      if (scrollContainer) {
+        // Let the scroll restoration happen first, then update active section
+        setTimeout(() => {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          let closestSectionId = 'home';
+          let closestDistance = Infinity;
+
+          for (const section of navSections) {
+            const element = document.getElementById(section.id);
+            if (!element) continue;
+
+            const rect = element.getBoundingClientRect();
+            const offset = rect.top - containerRect.top;
+            const distance = Math.abs(offset);
+
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestSectionId = section.id;
+            }
+          }
+
+          setActiveSectionId(closestSectionId);
+        }, 300);
+      }
       return;
     }
 

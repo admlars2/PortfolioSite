@@ -8,9 +8,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -23,9 +21,26 @@ body,
   height: 100%;
 }
 
+html {
+  background-color: rgb(255 255 255);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  background-color: rgb(17 24 39);
+}
+
 body {
   margin: 0;
   overflow: hidden; /* Only the main app container scrolls */
+  background-color: rgb(255 255 255);
+  color: rgb(17 24 39);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark body {
+  background-color: rgb(17 24 39);
+  color: rgb(243 244 246);
 }
 
 * {

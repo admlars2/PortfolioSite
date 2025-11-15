@@ -5,10 +5,42 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Portfolio of Adam Larson - Software developer showcasing projects including Valorant data analysis, web development, and other technical work." />
+    <meta name="keywords" content="Adam Larson, software developer, portfolio, web development, React, TypeScript" />
+    <meta name="author" content="Adam Larson" />
+    <meta name="theme-color" content="#4f46e5" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Adam Larson's Portfolio" />
+    <meta property="og:description" content="Portfolio of Adam Larson - Software developer showcasing projects including Valorant data analysis, web development, and other technical work." />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Adam Larson's Portfolio" />
+    <meta name="twitter:description" content="Portfolio of Adam Larson - Software developer showcasing projects including Valorant data analysis, web development, and other technical work." />
+    
+    <!-- Resource hints for external links -->
+    <link rel="preconnect" href="https://github.com" crossorigin />
+    <link rel="preconnect" href="https://www.linkedin.com" crossorigin />
+    <link rel="dns-prefetch" href="https://github.com" />
+    <link rel="dns-prefetch" href="https://www.linkedin.com" />
+    
+    <!-- Preload will be handled by React component for LCP image -->
+    
     <title>Adam Larson's Portfolio</title>
+    <script>
+      // Apply theme immediately to prevent flash of wrong theme
+      (function() {
+        const saved = localStorage.getItem('theme');
+        const theme = saved === 'light' || saved === 'dark' 
+          ? saved 
+          : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" defer></script>
   </body>
 </html>
