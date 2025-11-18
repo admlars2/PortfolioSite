@@ -12,9 +12,9 @@ function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <div className="h-screen w-full max-w-full overflow-hidden bg-white dark:bg-gray-900">
+        <div className="h-screen w-full max-w-full overflow-hidden bg-app text-primary transition-colors duration-300">
           <Sidebar />
-          <main className="h-full w-full max-w-full overflow-y-auto overflow-x-hidden transition-all duration-300 will-change-auto">
+          <main className="h-full w-full max-w-full overflow-y-auto overflow-x-hidden transition-all duration-300 will-change-auto bg-app">
             <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
               <Routes>
                 <Route path="/" element={<Home />} />

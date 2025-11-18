@@ -7,7 +7,7 @@ export default function DiscordBots() {
   return (
     <ProjectLayout>
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-4xl font-bold mb-6 text-primary">
           {t('projects.discordBots.title')}
         </h1>
         
@@ -22,15 +22,15 @@ export default function DiscordBots() {
             />
           </div>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.discordBots.intro1')}
           </p>
           
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.discordBots.intro2')}
           </p>
           
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-lg text-secondary mb-6">
             {t('projects.discordBots.intro3')}
           </p>
         </div>

@@ -41,7 +41,7 @@ interface TreeOptions {
   }
 }
 
-class Tree {
+export class Tree {
   options: TreeOptions;
   rng: RNG;
   branchQueue: Branch[];

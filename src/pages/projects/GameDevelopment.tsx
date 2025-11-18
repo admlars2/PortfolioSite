@@ -12,7 +12,7 @@ export default function GameDevelopment() {
   return (
     <ProjectLayout>
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-4xl font-bold mb-6 text-primary">
           {t('projects.gameDevelopment.title')}
         </h1>
         
@@ -27,34 +27,34 @@ export default function GameDevelopment() {
             />
           </div>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.gameDevelopment.intro1BeforeLink')}
             <a
               href="https://pifopifo.itch.io/the-tales-of-tiny"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-accent hover:underline transition-colors"
             >
               Tales of Tiny
             </a>
             {t('projects.gameDevelopment.intro1AfterLink')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.gameDevelopment.intro2')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.gameDevelopment.intro3')}
           </p>
 
           {/* Gameplay Gallery */}
           <div className="my-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold mb-4 text-primary">
               {t('projects.gameDevelopment.gameplayHeading')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden shadow-lg bg-card">
                 <img 
                   src={Gif1} 
                   alt={t('projects.gameDevelopment.gifAlt1')} 
@@ -62,7 +62,7 @@ export default function GameDevelopment() {
                   loading="lazy"
                 />
               </div>
-              <div className="rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden shadow-lg bg-card">
                 <img 
                   src={Gif2} 
                   alt={t('projects.gameDevelopment.gifAlt2')} 
@@ -70,7 +70,7 @@ export default function GameDevelopment() {
                   loading="lazy"
                 />
               </div>
-              <div className="rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden shadow-lg bg-card">
                 <img 
                   src={Gif3} 
                   alt={t('projects.gameDevelopment.gifAlt3')} 
@@ -78,7 +78,7 @@ export default function GameDevelopment() {
                   loading="lazy"
                 />
               </div>
-              <div className="rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-lg overflow-hidden shadow-lg bg-card">
                 <img 
                   src={Gif4} 
                   alt={t('projects.gameDevelopment.gifAlt4')} 
@@ -87,7 +87,7 @@ export default function GameDevelopment() {
                 />
               </div>
             </div>
-            <div className="rounded-lg overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800">
+            <div className="rounded-lg overflow-hidden shadow-lg bg-card">
               <img 
                 src={Image1} 
                 alt={t('projects.gameDevelopment.screenshotAlt')} 
@@ -97,13 +97,13 @@ export default function GameDevelopment() {
             </div>
           </div>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             For this project, my main role was the level designer. So for the beginning of the project, I ended up leading the discussion about what type of game everyone wanted to make. At first, we were all giving a large range of ideas, but I had to take all of those ideas and put them together to make a game that we could feasibly finish within the 6 week time frame that we had been given.
             After I collected everyone's ideas and came up with a solid idea of what we wanted to do, I got to work with creating the blacklight, which presented a couple of challenges because of the way that unity handles light. The main issue was that light in unity is that it does actually tell other objects that it is interacting with it, so I had to put together a solution using HLSL to get the effect that I wanted.
-            Then I had to design all of the rooms including a hedge maze and a tiled train puzzle where the player has to rotate tracks and get the right solution. Finally, after putting everything together, you can find the game that my team produced at this link: <a href="https://pifopifo.itch.io/the-tales-of-tiny" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">Tales of Tiny</a>.
+            Then I had to design all of the rooms including a hedge maze and a tiled train puzzle where the player has to rotate tracks and get the right solution. Finally, after putting everything together, you can find the game that my team produced at this link: <a href="https://pifopifo.itch.io/the-tales-of-tiny" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline transition-colors">Tales of Tiny</a>.
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-lg text-secondary mb-6">
             Overall, I had a lot of fun learning to code using HLSL and creating fun but difficult puzzles.
           </p>
         </div>

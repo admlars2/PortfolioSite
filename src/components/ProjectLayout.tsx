@@ -32,11 +32,11 @@ export default function ProjectLayout({ children }: ProjectLayoutProps) {
   };
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+    <div className="h-full w-full flex flex-col bg-app text-primary">
+      <div className="sticky top-0 z-50 bg-sidebar border-b border-sidebar flex-shrink-0 transition-colors">
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 p-4 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 p-4 text-secondary hover:text-accent transition-colors font-medium"
           aria-label={t('project.back')}
         >
           <svg

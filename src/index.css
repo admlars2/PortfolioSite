@@ -3,16 +3,31 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
-  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Default botanical light theme - will be overridden by ThemeContext */
+  --color-background: #CAD5CA;
+  --color-surface: #f8fcf8;
+  --color-surface-muted: #e8f0e8;
+  --color-card: #ffffff;
+  --color-text: #1a2a1f;
+  --color-text-muted: #4a5c4f;
+  --color-border: #b8c5b8;
+  --color-accent: #3C6E71;
+  --color-accent-hover: #2d5558;
+  --color-accent-contrast: #ffffff;
+  --color-sidebar: #f8fcf8;
+  --color-sidebar-border: #b8c5b8;
+  --color-switch-track: #a5bec0;
+  --color-switch-thumb: #ffffff;
+  --color-hero-overlay: #e8f0e8;
 }
 
 html,
@@ -22,29 +37,103 @@ body,
 }
 
 html {
-  background-color: rgb(255 255 255);
+  background-color: var(--color-background);
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-html.dark {
-  background-color: rgb(17 24 39);
 }
 
 body {
   margin: 0;
   overflow: hidden; /* Only the main app container scrolls */
-  background-color: rgb(255 255 255);
-  color: rgb(17 24 39);
+  background-color: var(--color-background);
+  color: var(--color-text);
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-html.dark body {
-  background-color: rgb(17 24 39);
-  color: rgb(243 244 246);
+  font-family: inherit;
 }
 
 * {
   box-sizing: border-box;
+}
+
+.bg-app {
+  background-color: var(--color-background);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-surface-muted {
+  background-color: var(--color-surface-muted);
+}
+
+.bg-card {
+  background-color: var(--color-card);
+}
+
+.bg-sidebar {
+  background-color: var(--color-sidebar);
+}
+
+.border-default {
+  border-color: var(--color-border);
+}
+
+.border-sidebar {
+  border-color: var(--color-sidebar-border);
+}
+
+.text-primary {
+  color: var(--color-text);
+}
+
+.text-secondary {
+  color: var(--color-text-muted);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.bg-accent:hover,
+.bg-accent:focus-visible {
+  background-color: var(--color-accent-hover);
+}
+
+.theme-switch-track {
+  background-color: var(--color-switch-track);
+}
+
+.theme-switch-thumb {
+  background-color: var(--color-switch-thumb);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.35);
+}
+
+.hero-overlay {
+  background-color: var(--color-hero-overlay);
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-accent-hover);
+  outline-offset: 2px;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
 /* Prevent fixed elements from causing horizontal scroll */

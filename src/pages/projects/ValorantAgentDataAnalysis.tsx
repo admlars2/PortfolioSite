@@ -6,29 +6,29 @@ export default function ValorantAgentDataAnalysis() {
   return (
     <ProjectLayout>
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-4xl font-bold mb-6 text-primary">
           {t('projects.valorantAnalysis.title')}
         </h1>
         
         <div className="prose dark:prose-invert max-w-none">
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.intro1')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.intro2BeforeLink')}
             <a
               href="https://www.vlr.gg"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-accent hover:underline transition-colors"
             >
               {t('projects.valorantAnalysis.intro2LinkText')}
             </a>
             {t('projects.valorantAnalysis.intro2AfterLink')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-lg text-secondary mb-6">
             {t('projects.valorantAnalysis.section2023Heading')}
           </p>
 
@@ -41,17 +41,17 @@ export default function ValorantAgentDataAnalysis() {
                   frameBorder="0" 
                 scrolling="no" 
                   className="border-4 rounded-lg w-full max-w-full"
-                  style={{ borderColor: '#5A4F72', minWidth: '1175px' }}
+                  style={{ borderColor: 'var(--color-accent)', minWidth: '1175px' }}
                   title={t('projects.valorantAnalysis.table2023Title')}
               />
             </div>
           </div>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.body1')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-lg text-secondary mb-6">
             {t('projects.valorantAnalysis.section2022Heading')}
           </p>
 
@@ -64,17 +64,17 @@ export default function ValorantAgentDataAnalysis() {
                   frameBorder="0" 
                 scrolling="no" 
                   className="border-4 rounded-lg w-full max-w-full"
-                  style={{ borderColor: '#5A4F72', minWidth: '1175px' }}
+                  style={{ borderColor: 'var(--color-accent)', minWidth: '1175px' }}
                   title={t('projects.valorantAnalysis.table2022Title')}
               />
             </div>
           </div>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.body2')}
           </p>
 
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-lg text-secondary mb-6">
             {t('projects.valorantAnalysis.conclusion')}
           </p>
         </div>

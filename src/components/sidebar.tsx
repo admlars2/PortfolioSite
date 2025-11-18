@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThemeSwitch from './ThemeSwitch';
@@ -37,13 +37,13 @@ export default function Sidebar() {
     }
   }, [isHovered]);
 
-  const navSections = [
+  const navSections = useMemo(() => ([
     { id: 'home', label: t('nav.home'), href: '/', hash: '' },
     { id: 'about', label: t('nav.about'), href: '/', hash: 'about' },
     { id: 'projects', label: t('nav.projects'), href: '/', hash: 'projects' },
     { id: 'skills', label: t('nav.skills'), href: '/', hash: 'skills' },
     { id: 'contact', label: t('nav.contact'), href: '/', hash: 'contact' },
-  ];
+  ]), [t]);
 
   /**
    * Custom smooth scroll function with ease-in-out cubic easing
@@ -146,7 +146,7 @@ export default function Sidebar() {
     let isRestoringScroll = false;
     try {
       isRestoringScroll = !!sessionStorage.getItem('homeScrollPosition');
-    } catch (e) {
+    } catch {
       // Ignore storage errors
     }
     if (isRestoringScroll) {
@@ -197,7 +197,7 @@ export default function Sidebar() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [location.pathname, location.hash, scrollToSection, smoothScrollTo]);
+  }, [location.pathname, location.hash, navSections, scrollToSection, smoothScrollTo]);
 
   /**
    * Track scroll position inside the main container and update active section
@@ -303,7 +303,7 @@ export default function Sidebar() {
           isHovered ? 'opacity-0' : 'opacity-100'
         }`}
         style={{
-          background: 'linear-gradient(to right, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0)), rgba(0, 0, 0, 0)',
+          background: 'linear-gradient(to right, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0))',
           maxWidth: '100vw'
         }}
         onMouseEnter={() => setIsHovered(true)}
@@ -324,7 +324,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed left-0 top-0 h-full w-64 md:w-72 lg:w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-lg z-40 transition-transform duration-300 ease-in-out will-change-transform ${
+        className={`fixed left-0 top-0 h-full w-64 md:w-72 lg:w-80 bg-sidebar border-r border-sidebar shadow-lg z-40 transition-transform duration-300 ease-in-out will-change-transform text-primary ${
           isHovered ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{
@@ -341,10 +341,10 @@ export default function Sidebar() {
               <button
                 key={section.id}
                 onClick={(e) => handleSectionClick(e, section)}
-                className={`w-full text-center block px-4 py-2 rounded-lg transition-colors ${
+                className={`w-full text-center block px-4 py-2 rounded-lg transition-colors border border-transparent ${
                   isActive(section)
-                    ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                    : 'text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-surface-muted text-primary font-semibold border-default'
+                    : 'text-secondary hover:bg-surface-muted'
                 }`}
               >
                 {section.label}
@@ -356,7 +356,7 @@ export default function Sidebar() {
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-3 text-lg">
             {/* Theme toggle */}
             <div className="flex items-center justify-between px-4 py-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-secondary">
                 {t('theme.toggle')}
               </span>
               <ThemeSwitch />
@@ -364,7 +364,7 @@ export default function Sidebar() {
 
             {/* Language selector */}
             <div className="flex items-center justify-between px-4 py-2">
-              <label htmlFor="language-select" className="text-sm text-gray-600 dark:text-gray-400">
+              <label htmlFor="language-select" className="text-sm text-secondary">
                 {t('language.select')}
               </label>
               <select
@@ -372,7 +372,7 @@ export default function Sidebar() {
                 name="language"
                 value={i18n.language}
                 onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="px-2 py-1 text-sm rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                className="px-2 py-1 text-sm rounded bg-surface border border-default text-primary"
               >
                 <option value="en">{t('language.en')}</option>
               </select>

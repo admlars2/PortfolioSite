@@ -37,9 +37,7 @@ const ThemeSwitch = () => {
         className="sr-only"
         aria-label="Theme toggle checkbox"
       />
-      <span className={`absolute inset-0 cursor-pointer rounded-full overflow-hidden select-none transition-colors duration-300 ease-in-out will-change-[background-color] ${
-        isDarkMode ? 'bg-[#24305E]' : 'bg-[#A8D0E6]'
-      }`}>
+      <span className="absolute inset-0 cursor-pointer rounded-full overflow-hidden select-none transition-colors duration-300 ease-in-out will-change-[background-color] theme-switch-track">
         <img 
           src={sunmoon} 
           alt="sunmoon" 
@@ -50,7 +48,7 @@ const ThemeSwitch = () => {
           }`}
           fetchPriority="high"
         />
-        <span className={`absolute w-6 h-6 bg-white rounded-full top-1/2 left-0 transition-transform duration-300 ease-in-out z-10 will-change-transform ${
+        <span className={`absolute w-6 h-6 rounded-full top-1/2 left-0 transition-transform duration-300 ease-in-out z-10 will-change-transform theme-switch-thumb ${
           isDarkMode ? 'translate-x-[115%] -translate-y-1/2' : 'translate-x-[15%] -translate-y-1/2'
         }`} />
       </span>

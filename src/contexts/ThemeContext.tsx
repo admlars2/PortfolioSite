@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
+import { themeTokens } from '@/theme/tokens';
 
 type Theme = 'light' | 'dark';
 
@@ -17,14 +18,29 @@ function getInitialTheme(): Theme {
   return htmlClass || 'light';
 }
 
+function toCssVariableName(tokenKey: string) {
+  return `--color-${tokenKey.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+}
+
 function applyTheme(theme: Theme) {
-  document.documentElement.classList.remove('light', 'dark');
-  document.documentElement.classList.add(theme);
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(theme);
+
+  const tokens = themeTokens[theme];
+  Object.entries(tokens).forEach(([tokenKey, value]) => {
+    root.style.setProperty(toCssVariableName(tokenKey), value);
+  });
+
   localStorage.setItem('theme', theme);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    const initial = getInitialTheme();
+    applyTheme(initial);
+    return initial;
+  });
 
   const toggleTheme = () => {
     setTheme(prev => {

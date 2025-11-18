@@ -212,9 +212,9 @@ export default function Home() {
     const mainElement = document.querySelector('main');
     if (mainElement) {
       // Store scroll position but don't block cache
-      try {
-        sessionStorage.setItem('homeScrollPosition', mainElement.scrollTop.toString());
-      } catch (e) {
+    try {
+      sessionStorage.setItem('homeScrollPosition', mainElement.scrollTop.toString());
+    } catch {
         // Ignore storage errors
       }
     }
@@ -226,7 +226,7 @@ export default function Home() {
       const imageFit = project.imageFit || 'cover';
       const baseContainer = `w-full md:w-1/2 flex-shrink-0 overflow-hidden rounded-lg shadow-md ${PROJECT_IMAGE_HEIGHTS}`;
       const containerClass = imageFit === 'contain'
-        ? `${baseContainer} flex items-center justify-center bg-gray-50 dark:bg-gray-900`
+        ? `${baseContainer} flex items-center justify-center bg-surface-muted`
         : baseContainer;
       const imageClass = imageFit === 'contain'
         ? 'max-h-full w-full object-contain'
@@ -256,8 +256,8 @@ export default function Home() {
     }
     if (project.emoji) {
       return (
-        <div className={`w-full md:w-1/2 ${PROJECT_IMAGE_HEIGHTS} bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg shadow-md`}>
-          <span className="text-gray-500 dark:text-gray-400 text-4xl">{project.emoji}</span>
+        <div className={`w-full md:w-1/2 ${PROJECT_IMAGE_HEIGHTS} bg-surface-muted flex items-center justify-center rounded-lg shadow-md`}>
+          <span className="text-secondary text-4xl">{project.emoji}</span>
         </div>
       );
     }
@@ -266,11 +266,11 @@ export default function Home() {
 
   const renderProjectContent = (project: Project) => (
     <div className="w-full md:w-1/2 p-8 space-y-6 flex flex-col justify-center">
-      <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{project.title}</h3>
-      <p className="text-lg text-gray-700 dark:text-gray-300">{project.description}</p>
+      <h3 className="text-2xl font-bold mb-4 text-primary">{project.title}</h3>
+      <p className="text-lg text-secondary">{project.description}</p>
       <button
         onClick={() => handleProjectClick(project.route)}
-        className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        className="btn-primary inline-block px-6 py-3 rounded-lg font-semibold shadow-md"
       >
         Learn more
       </button>
@@ -278,30 +278,30 @@ export default function Home() {
   );
 
   return (
-    <div className="w-full overflow-x-hidden space-y-16 sm:space-y-20">
+    <div className="w-full overflow-x-hidden space-y-16 sm:space-y-20 bg-app text-primary">
       {/* Home Section */}
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-gray-900"
+        className="min-h-screen flex items-center justify-center px-4 py-12 hero-overlay"
       >
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-5xl font-bold text-primary">
             {t('nav.home')}
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
+          <p className="text-xl text-secondary">
             Welcome to my portfolio
           </p>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className={`${SECTION_SPACING} bg-gray-50 dark:bg-gray-800`}>
+      <section id="about" className={`${SECTION_SPACING} bg-surface-muted`}>
         <div className={`${SECTION_CONTAINER} space-y-8`}>
-          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
+          <h2 className="text-4xl font-bold text-center text-primary">
             Career Objective
           </h2>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8">
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+          <div className="bg-card rounded-2xl shadow-lg p-8">
+            <p className="text-lg text-secondary leading-relaxed">
               I am a Computer Science student looking to pursue an opportunity in the field of software engineering. 
               Utilizing my strong foundation in building software and writing algorithms, I aim to gain practical experience 
               and collaborate with professionals in the industry. I am excited to explore my passion for technology in 
@@ -314,7 +314,7 @@ export default function Home() {
       {/* Projects Section */}
       <section id="projects" className={`${SECTION_SPACING} md:px-10`}>
         <div className="max-w-screen-2xl mx-auto space-y-12">
-          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
+          <h2 className="text-4xl font-bold text-center text-primary">
             {t('nav.projects')}
           </h2>
           
@@ -322,7 +322,7 @@ export default function Home() {
             {PROJECTS.map((project, index) => (
               <div
                 key={project.id}
-                className={`flex flex-col gap-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden md:items-stretch ${
+                className={`flex flex-col gap-8 bg-card rounded-2xl shadow-lg overflow-hidden md:items-stretch transition-colors ${
                   project.imagePosition === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'
                 }`}
               >
@@ -335,23 +335,23 @@ export default function Home() {
       </section>
       
       {/* Skills Section */}
-      <section id="skills" className={`${SECTION_SPACING} bg-gray-50 dark:bg-gray-800`}>
+      <section id="skills" className={`${SECTION_SPACING} bg-surface-muted`}>
         <div className={`${SECTION_CONTAINER}`}>
-          <h2 className="text-4xl font-bold mb-4 text-center text-gray-900 dark:text-white">
+          <h2 className="text-4xl font-bold mb-4 text-center text-primary">
             {t('nav.skills')}
           </h2>
-          <p className="text-center text-lg text-gray-700 dark:text-gray-300 mb-12">
+          <p className="text-center text-lg text-secondary mb-12">
             I have been working with Computer Programming for more than 8 years now. Here are a few of the skills that I have acquired.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SKILLS.map((skill) => (
               <div
                 key={skill.name}
-                className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition-shadow"
+                className="bg-card rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition-shadow"
               >
                 <div className="text-4xl mb-4">{skill.emoji}</div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{skill.name}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{skill.experience}</p>
+                <h3 className="text-xl font-bold mb-2 text-primary">{skill.name}</h3>
+                <p className="text-secondary">{skill.experience}</p>
               </div>
             ))}
           </div>
@@ -359,32 +359,32 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className={`${SECTION_SPACING} bg-gray-50 dark:bg-gray-800`}>
+      <section id="contact" className={`${SECTION_SPACING} bg-surface-muted`}>
         <div className="max-w-4xl mx-auto space-y-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
+          <h2 className="text-4xl font-bold text-center text-primary">
             {t('nav.contact')}
           </h2>
-          <p className="text-center text-lg text-gray-700 dark:text-gray-300">
+          <p className="text-center text-lg text-secondary">
             Feel free to send me a message.
           </p>
           
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
+          <div className="bg-card rounded-lg shadow-lg p-8">
             <ul className="space-y-6">
               <li>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Email</h3>
+                <h3 className="text-xl font-semibold mb-2 text-primary">Email</h3>
                 <a 
                   href="mailto:admlars2@gmail.com?subject=Contact Request" 
-                  className="text-indigo-600 dark:text-indigo-400 hover:underline text-lg"
+                  className="text-accent hover:underline text-lg transition-colors"
                 >
                   admlars2@gmail.com
                 </a>
               </li>
               <li>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Discord</h3>
-                <span className="text-lg text-gray-700 dark:text-gray-300">adum.__</span>
+                <h3 className="text-xl font-semibold mb-2 text-primary">Discord</h3>
+                <span className="text-lg text-secondary">adum.__</span>
               </li>
               <li>
-                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Social</h3>
+                <h3 className="text-xl font-semibold mb-4 text-primary">Social</h3>
                 <ul className="flex gap-4">
                   {SOCIAL_LINKS.map((link) => {
                     const IconComponent = link.icon;
@@ -394,7 +394,7 @@ export default function Home() {
                           href={link.url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-2xl"
+                          className="text-secondary hover:text-accent transition-colors text-2xl"
                           aria-label={link.name}
                         >
                           <span className="sr-only">{link.name}</span>
