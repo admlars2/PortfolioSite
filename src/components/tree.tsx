@@ -37,6 +37,11 @@ interface TreeOptions {
     segments: number[];
     taper: number[];
     gnarliness: number[];
+    twist: number[];
+    force: {
+      direction: THREE.Vector3;
+      strength: number;
+    };
   }
 }
 
