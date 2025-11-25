@@ -6,6 +6,7 @@ import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
+import TreeBackground from '@/components/TreeBackground';
 
 interface Project {
   id: string;
@@ -282,9 +283,10 @@ export default function Home() {
       {/* Home Section */}
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center px-4 py-12 hero-overlay"
+        className="min-h-screen flex items-center justify-center px-4 py-12 hero-overlay relative"
       >
-        <div className="text-center space-y-4 max-w-3xl mx-auto">
+        <TreeBackground seed={42} />
+        <div className="text-center space-y-4 max-w-3xl mx-auto relative z-10">
           <h1 className="text-5xl font-bold text-primary">
             {t('nav.home')}
           </h1>
