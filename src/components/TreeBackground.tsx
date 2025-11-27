@@ -1,22 +1,26 @@
-import { useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useMemo, useRef, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Tree } from './tree';
 import { useTheme } from '../contexts/ThemeContext';
+import type { LSystemConfig } from './LSystem';
 
 interface TreeMeshProps {
   tree: Tree;
   branchColor: string;
-  leafColor: string;
+  onRotationStart: () => void;
+  onRotationEnd: () => void;
 }
 
-function TreeMesh({ tree, branchColor, leafColor }: TreeMeshProps) {
+function TreeMesh({ tree, branchColor, onRotationStart, onRotationEnd }: TreeMeshProps) {
   const branchMeshRef = useRef<THREE.Mesh>(null);
-  const leafMeshRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
+  const isDraggingRef = useRef(false);
+  const previousMouseRef = useRef<{ x: number; y: number } | null>(null);
+  const rotationRef = useRef({ x: 0, y: 0 });
 
   const branchGeometry = useMemo(() => tree.createBranchGeometry(), [tree]);
-  const leafGeometry = useMemo(() => tree.createLeafGeometry(), [tree]);
+  // const leafGeometry = useMemo(() => tree.createLeafGeometry(), [tree]);
 
   const branchMaterial = useMemo(
     () =>
@@ -28,32 +32,79 @@ function TreeMesh({ tree, branchColor, leafColor }: TreeMeshProps) {
     [branchColor]
   );
 
-  const leafMaterial = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: leafColor,
-        roughness: 0.9,
-        metalness: 0.0,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8,
-      }),
-    [leafColor]
-  );
+  // const leafMaterial = useMemo(
+  //   () =>
+  //     new THREE.MeshStandardMaterial({
+  //       color: leafColor,
+  //       roughness: 0.9,
+  //       metalness: 0.0,
+  //       side: THREE.DoubleSide,
+  //       transparent: true,
+  //       opacity: 0.8,
+  //     }),
+  //   [leafColor]
+  // );
+
+  const handlePointerDown = (event: React.PointerEvent) => {
+    event.stopPropagation();
+    isDraggingRef.current = true;
+    previousMouseRef.current = { x: event.clientX, y: event.clientY };
+    onRotationStart();
+    // Capture pointer to track movement outside the element
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (!isDraggingRef.current || !previousMouseRef.current || !groupRef.current) return;
+
+    const deltaX = event.clientX - previousMouseRef.current.x;
+    const deltaY = event.clientY - previousMouseRef.current.y;
+
+    // Rotate around Y axis (horizontal drag) and X axis (vertical drag)
+    const rotationSpeed = 0.005;
+    rotationRef.current.y += deltaX * rotationSpeed;
+    rotationRef.current.x += deltaY * rotationSpeed;
+
+    // Apply rotation to group
+    groupRef.current.rotation.y = rotationRef.current.y;
+    groupRef.current.rotation.x = rotationRef.current.x;
+
+    previousMouseRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent) => {
+    isDraggingRef.current = false;
+    previousMouseRef.current = null;
+    onRotationEnd();
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+  };
+
+  const handlePointerCancel = (event: React.PointerEvent) => {
+    isDraggingRef.current = false;
+    previousMouseRef.current = null;
+    onRotationEnd();
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+  };
 
   // Subtle animation
-  useFrame((state) => {
-    if (groupRef.current) {
-      // Gentle sway
-      groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
-      groupRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.2) * 0.03;
-    }
-  });
+  // useFrame((state) => {
+  //   if (groupRef.current) {
+  //     // Gentle sway
+  //     groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
+  //     groupRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.2) * 0.03;
+  //   }
+  // });
 
   return (
-    <group ref={groupRef}>
+    <group
+      ref={groupRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
       <mesh ref={branchMeshRef} geometry={branchGeometry} material={branchMaterial} />
-      <mesh ref={leafMeshRef} geometry={leafGeometry} material={leafMaterial} />
+      {/* <mesh ref={leafMeshRef} geometry={leafGeometry} material={leafMaterial} /> */}
     </group>
   );
 }
@@ -64,30 +115,71 @@ interface TreeBackgroundProps {
 
 export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
   const { theme } = useTheme();
+  const [isRotating, setIsRotating] = useState(false);
 
   // Theme-aware colors - trunk should be darker brown
   const branchColor = theme === 'dark' ? '#5d4e37' : '#6b5d47';
-  const leafColor = theme === 'dark' ? '#6b8e6b' : '#5a8a5a';
 
-  // Default tree options
+  // L-system configuration for oak-like tree with 2 branches
+  const lSystemConfig: LSystemConfig = useMemo(
+    () => ({
+      axiom: 'T(1.0, 0)',
+      iterations: 4,
+      seed,
+      rules: [
+        // Trunk forks into 2 leaders when size > 0.3
+        {
+          symbol: 'T',
+          condition: (params) => params[0] > 0.3, // s > 0.3
+          production: 'F(s)[+0.4 T(s * 0.8, d + 1)][-0.4 T(s * 0.8, d + 1)]',
+        },
+        // Trunk stops when size <= 0.3
+        {
+          symbol: 'T',
+          condition: (params) => params[0] <= 0.3, // s <= 0.3
+          production: 'F(s)',
+        },
+        // Side branches continue branching when size > 0.2
+        {
+          symbol: 'B',
+          condition: (params) => params[0] > 0.2, // s > 0.2
+          production: 'F(s)[+0.3 B(s * 0.7, d + 1)][-0.3 B(s * 0.7, d + 1)]',
+        },
+        // Side branches stop when size <= 0.2
+        {
+          symbol: 'B',
+          condition: (params) => params[0] <= 0.2, // s <= 0.2
+          production: 'F(s)',
+        },
+      ],
+    }),
+    [seed]
+  );
+
+  // Turtle interpreter configuration
+  const turtleConfig = useMemo(
+    () => ({
+      initialLength: 1.0,
+      initialRadius: 0.15,
+      lengthScale: 0.8,
+      radiusScale: 0.7,
+      angleStep: Math.PI / 6, // 30 degrees
+      sectionCount: 8,
+      faceCount: 8,
+      taper: 0.2,
+      twist: 0.0,
+    }),
+    []
+  );
+
+  // Tree options combining L-system and turtle config
   const treeOptions = useMemo(
     () => ({
       seed,
-      branch: {
-        length: [4.0, 2.0, 1.2, 0.6], // Lengths for each level
-        radius: [0.2, 0.1, 0.05, 0.025], // Radii for each level
-        sections: [10, 8, 6, 4], // Number of sections per branch
-        segments: [8, 8, 6, 6], // Segments around circumference
-        taper: [0.25, 0.35, 0.45, 0.55], // Taper factor per level
-        gnarliness: [0.06, 0.08, 0.1, 0.12], // Reduced random variation per level
-        twist: [0.02, 0.04, 0.06, 0.08], // Reduced twist per level
-        force: {
-          direction: new THREE.Vector3(0, 1, 0), // Upward growth
-          strength: 0.02, // Minimal force - just a slight upward tendency
-        },
-      },
+      lSystem: lSystemConfig,
+      turtle: turtleConfig,
     }),
-    [seed]
+    [seed, lSystemConfig, turtleConfig]
   );
 
   const tree = useMemo(() => {
@@ -97,17 +189,25 @@ export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
   }, [treeOptions]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none hidden sm:block" style={{ zIndex: 0 }}>
+    <div 
+      className="absolute inset-0 overflow-hidden hidden sm:block" 
+      style={{ zIndex: 0, pointerEvents: isRotating ? 'auto' : 'none', cursor: isRotating ? 'grabbing' : 'grab' }}
+    >
       <Canvas
         camera={{ position: [2, 1, 6], fov: 50 }}
         gl={{ alpha: true, antialias: true }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'auto' }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 5, 5]} intensity={0.8} />
         <directionalLight position={[-5, 3, -5]} intensity={0.4} />
         <group position={[1.5, -2.5, 0]}>
-          <TreeMesh tree={tree} branchColor={branchColor} leafColor={leafColor} />
+          <TreeMesh 
+            tree={tree} 
+            branchColor={branchColor}
+            onRotationStart={() => setIsRotating(true)}
+            onRotationEnd={() => setIsRotating(false)}
+          />
         </group>
       </Canvas>
     </div>
