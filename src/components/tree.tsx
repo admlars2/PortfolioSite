@@ -39,8 +39,11 @@ export class Tree {
     };
     this.lSystemGenerator = new LSystemGenerator(lSystemConfig);
     
-    // Initialize turtle interpreter
-    this.turtleInterpreter = new TurtleInterpreter(options.turtle);
+    // Initialize turtle interpreter with seed
+    this.turtleInterpreter = new TurtleInterpreter({
+      ...options.turtle,
+      seed: options.seed,
+    });
 
     this.branches = {
       verts: [],
@@ -59,7 +62,11 @@ export class Tree {
 
   generate(): void {
     // Update turtle interpreter config in case it changed
-    this.turtleInterpreter.updateConfig(this.options.turtle);
+    // Include seed to ensure RNG is reinitialized for deterministic results
+    this.turtleInterpreter.updateConfig({
+      ...this.options.turtle,
+      seed: this.options.seed,
+    });
     
     // Reset branches
     this.branches = {

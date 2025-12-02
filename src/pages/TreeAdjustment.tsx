@@ -165,6 +165,8 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
   const [segments, setSegments] = useState(3); // Number of segments in the tree
   const [angleStep, setAngleStep] = useState(Math.PI / 3); // 60 degrees
   const [wireframe, setWireframe] = useState(false);
+  const [gnarliness, setGnarliness] = useState(0.1);
+  const [upForce, setUpForce] = useState(0.3);
 
   const branchColor = theme === 'dark' ? '#5d4e37' : '#6b5d47';
 
@@ -205,8 +207,10 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
       faceCount,
       taper,
       twist,
+      gnarliness,
+      upForce,
     }),
-    [initialLength, initialRadius, angleStep, sectionCount, faceCount, taper, twist]
+    [initialLength, initialRadius, angleStep, sectionCount, faceCount, taper, twist, gnarliness, upForce]
   );
 
   // Tree options
@@ -363,6 +367,36 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
                 step="0.01"
                 value={angleStep}
                 onChange={(e) => setAngleStep(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="pt-4 border-t border-sidebar">
+              <label className="block text-sm font-medium mb-2">
+                Gnarliness: {gnarliness.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="3"
+                step="0.01"
+                value={gnarliness}
+                onChange={(e) => setGnarliness(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Upward Force: {upForce.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={upForce}
+                onChange={(e) => setUpForce(Number(e.target.value))}
                 className="w-full"
               />
             </div>

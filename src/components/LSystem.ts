@@ -28,6 +28,13 @@ export class LSystemGenerator {
   }
 
   /**
+   * Get the RNG instance for use in other components
+   */
+  getRNG(): seedrandom.PRNG {
+    return this.rng;
+  }
+
+  /**
    * Parse a parametric symbol from string like "T(1.0, 0)"
    */
   private parseSymbol(symbolStr: string): ParametricSymbol | null {
