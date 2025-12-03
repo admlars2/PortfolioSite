@@ -156,43 +156,61 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
   const [seed, setSeed] = useState(42);
   
   // Trunk parameters
-  const [initialLength, setInitialLength] = useState(1.3);
+  const [initialLength, setInitialLength] = useState(1.5);
   const [initialRadius, setInitialRadius] = useState(0.3);
   const [sectionCount, setSectionCount] = useState(5);
   const [faceCount, setFaceCount] = useState(5);
-  const [taper, setTaper] = useState(0.3);
+  const [taper, setTaper] = useState(1);
   const [twist, setTwist] = useState(Math.PI / 3);
-  const [segments, setSegments] = useState(3); // Number of segments in the tree
+  const [segments, setSegments] = useState(5); // Number of segments in the tree
   const [angleStep, setAngleStep] = useState(Math.PI / 3); // 60 degrees
   const [wireframe, setWireframe] = useState(false);
-  const [gnarliness, setGnarliness] = useState(0.1);
+  const [gnarliness, setGnarliness] = useState(1.3);
   const [upForce, setUpForce] = useState(0.3);
 
   const branchColor = theme === 'dark' ? '#5d4e37' : '#6b5d47';
 
-  // L-system configuration - simplified to just trunk for now
+  // L-system configuration with branching and angleStep support
   // Use initialLength as a multiplier for the size parameter
   const lSystemConfig: LSystemConfig = useMemo(
-    () => ({
-      axiom: `T(${initialLength}, 0)`, // Start with initialLength as the size
-      iterations: segments,
-      seed,
-      rules: [
-        // Trunk stops when size <= 0.3
-        {
-          symbol: 'T',
-          condition: (params) => params[0] <= 0.3,
-          production: 'F(s)',
-        },
-        // Trunk continues when size > 0.3
-        {
-          symbol: 'T',
-          condition: (params) => params[0] > 0.3,
-          production: 'F(s) T(s * 0.9, d + 1)',
-        },
-      ],
-    }),
-    [seed, segments, initialLength]
+    () => {
+      // Convert angleStep to a string representation for use in production rules
+      // Use angleStep directly in rotation commands
+      const angleStr = angleStep.toString();
+      
+      return {
+        axiom: `T(${initialLength}, 0)`, // Start with initialLength as the size
+        iterations: segments,
+        seed,
+        rules: [
+          // Trunk forks into branches when size > 0.3
+          {
+            symbol: 'T',
+            condition: (params) => params[0] > 0.3,
+            production: `F(s)[+${angleStr} B(s * 0.8, d + 1)][-${angleStr} B(s * 0.8, d + 1)] T(s * 0.9, d + 1)`,
+          },
+          // Trunk stops when size <= 0.3
+          {
+            symbol: 'T',
+            condition: (params) => params[0] <= 0.3,
+            production: 'F(s)',
+          },
+          // Branches continue branching when size > 0.2
+          {
+            symbol: 'B',
+            condition: (params) => params[0] > 0.2,
+            production: `F(s)[+${angleStr} B(s * 0.7, d + 1)][-${angleStr} B(s * 0.7, d + 1)]`,
+          },
+          // Branches stop when size <= 0.2
+          {
+            symbol: 'B',
+            condition: (params) => params[0] <= 0.2,
+            production: 'F(s)',
+          },
+        ],
+      };
+    },
+    [seed, segments, initialLength, angleStep]
   );
 
   // Turtle interpreter configuration
@@ -312,8 +330,8 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Taper: {taper.toFixed(2)}
+              <label className="block text-sm font-medium mb-2" title="Taper affects trunk fully; branches taper at reduced rate with minimum radius protection">
+                Taper: {taper.toFixed(2)} (trunk: full, branches: reduced)
               </label>
               <input
                 type="range"
@@ -418,7 +436,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
         {/* Tree Preview */}
         <div 
           className="flex-1 relative"
-          style={{ pointerEvents: isRotating ? 'auto' : 'none', cursor: isRotating ? 'grabbing' : 'grab' }}
+          style={{ pointerEvents: 'auto', cursor: isRotating ? 'grabbing' : 'grab' }}
         >
           <Canvas
             camera={{ position: [2, 1, 6], fov: 50 }}

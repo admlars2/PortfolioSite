@@ -24,6 +24,8 @@ export interface TurtleConfig {
   gnarliness?: number; // Amplitude of random rotation (0-1)
   upForce?: number; // Strength of upward bias (0-1)
   seed?: number; // Seed for RNG
+  branchTaperScale?: number; // Scale factor for branch taper relative to trunk taper (default: 0.5)
+  minRadiusRatio?: number; // Minimum radius as ratio of starting radius per depth (default: 0.1)
 }
 
 export class TurtleInterpreter {
@@ -32,6 +34,11 @@ export class TurtleInterpreter {
   private currentState: TurtleState;
   private rng: seedrandom.PRNG;
   private totalTrunkLength: number = 0; // Total length of trunk for global taper calculation
+  private lastSegmentEndRingIndex: number = -1; // Index of last ring of previous segment for connectivity
+  private lastSegmentEndPosition: THREE.Vector3 | null = null; // Position of last segment end
+  private lastSegmentEndOrientation: THREE.Euler | null = null; // Orientation of last segment end
+  private lastSegmentEndRadius: number = 0; // Radius of last segment end
+  private lastSegmentEndTwist: number = 0; // Twist of last segment end
   
   public branches: {
     verts: number[];
@@ -46,6 +53,8 @@ export class TurtleInterpreter {
       twist: config.twist ?? 0, // Default twist to 0 if not provided
       gnarliness: config.gnarliness ?? 0,
       upForce: config.upForce ?? 0,
+      branchTaperScale: config.branchTaperScale ?? 0.5, // Branches taper half as much as trunk
+      minRadiusRatio: config.minRadiusRatio ?? 0.1, // Branches never go below 10% of starting radius
     };
     this.branches = {
       verts: [],
@@ -67,6 +76,13 @@ export class TurtleInterpreter {
       cumulativeTwist: 0,
       cumulativeDistance: 0,
     };
+    
+    // Initialize connectivity tracking
+    this.lastSegmentEndRingIndex = -1;
+    this.lastSegmentEndPosition = null;
+    this.lastSegmentEndOrientation = null;
+    this.lastSegmentEndRadius = 0;
+    this.lastSegmentEndTwist = 0;
   }
 
   /**
@@ -92,10 +108,67 @@ export class TurtleInterpreter {
   }
 
   /**
-   * Draw a branch segment (F command)
+   * Check if the next commands after current position indicate child branches
+   * Returns true if there are child branches (indicated by '[' after this F command)
+   * For branches (depth > 0), a segment has children if there's a '[' before the next ']' or end
    */
-  private drawSegment(length: number, radius: number): void {
-    const startIndex = this.branches.verts.length / 3;
+  private hasChildBranches(lSystemString: string, currentIndex: number): boolean {
+    // Only check for children if we're at branch depth (depth > 0)
+    // Trunk segments (depth === 0) use global taper regardless
+    if (this.currentState.depth === 0) {
+      return false; // Trunk segments don't use terminal detection
+    }
+    
+    let i = currentIndex;
+    let bracketDepth = 0; // Track bracket depth relative to starting point
+    
+    // Skip whitespace and rotation commands, looking for '[' or ']'
+    while (i < lSystemString.length) {
+      const char = lSystemString[i];
+      
+      if (char === '[') {
+        // Found a branch start at current depth - this segment has children
+        if (bracketDepth === 0) {
+          return true;
+        }
+        bracketDepth++;
+        i++;
+      } else if (char === ']') {
+        bracketDepth--;
+        // If we close more brackets than we've seen, we're back at parent level
+        if (bracketDepth < 0) {
+          return false; // No children found before closing parent branch
+        }
+        i++;
+      } else if (char === 'F' || char === 'T' || char === 'B') {
+        // Check if this is a parametric symbol like F(params), T(params), etc.
+        if (i + 1 < lSystemString.length && lSystemString[i + 1] === '(') {
+          // Skip parametric symbol including its parameters
+          let j = i + 2;
+          let parenCount = 1;
+          while (j < lSystemString.length && parenCount > 0) {
+            if (lSystemString[j] === '(') parenCount++;
+            if (lSystemString[j] === ')') parenCount--;
+            j++;
+          }
+          i = j;
+        } else {
+          i++;
+        }
+      } else {
+        // Rotation commands (+ - & ^ \ /) and other characters - just skip
+        i++;
+      }
+    }
+    
+    return false; // No child branches found before end of string
+  }
+
+  /**
+   * Draw a branch segment (F command)
+   * @param isTerminal - true if this segment has no child branches (should taper to point)
+   */
+  private drawSegment(length: number, radius: number, isTerminal: boolean = false): void {
     const sectionCount = this.config.sectionCount;
     const faceCount = this.config.faceCount;
     const sectionLength = length / sectionCount;
@@ -104,6 +177,27 @@ export class TurtleInterpreter {
     const startOrientation = this.currentState.orientation.clone();
     const startTwist = this.currentState.cumulativeTwist; // Start from accumulated twist
     const startDistance = this.currentState.cumulativeDistance; // Start distance for global taper
+    
+    // Check if we should reuse the last ring from previous segment for smooth connectivity
+    // Only reuse if: same depth, positions match (within tolerance), orientations match, and radius matches
+    const shouldReuseFirstRing = 
+      this.lastSegmentEndRingIndex >= 0 &&
+      this.lastSegmentEndPosition &&
+      this.lastSegmentEndOrientation &&
+      startPos.distanceTo(this.lastSegmentEndPosition) < 0.001 && // Position matches
+      Math.abs(startOrientation.x - this.lastSegmentEndOrientation.x) < 0.001 &&
+      Math.abs(startOrientation.y - this.lastSegmentEndOrientation.y) < 0.001 &&
+      Math.abs(startOrientation.z - this.lastSegmentEndOrientation.z) < 0.001 && // Orientation matches
+      Math.abs(radius - this.lastSegmentEndRadius) < 0.001 && // Radius matches
+      Math.abs(startTwist - this.lastSegmentEndTwist) < 0.001; // Twist matches
+    
+    const startIndex = this.branches.verts.length / 3;
+    let firstRingIndex = startIndex;
+    
+    // If reusing first ring, skip generating it
+    if (shouldReuseFirstRing) {
+      firstRingIndex = this.lastSegmentEndRingIndex;
+    }
     
     // Generate gnarliness rotations for this segment (trunk only)
     let yawJitter = 0;
@@ -118,8 +212,9 @@ export class TurtleInterpreter {
     let currentPos = startPos.clone();
     let currentDistance = startDistance;
     
-    // Generate vertices for all sections
-    for (let i = 0; i <= sectionCount; i++) {
+    // Generate vertices for all sections (skip first ring if reusing)
+    const ringStart = shouldReuseFirstRing ? 1 : 0;
+    for (let i = ringStart; i <= sectionCount; i++) {
       const tLocal = i / sectionCount; // Local t within segment (0-1)
       
       // Calculate global taper t based on cumulative distance along trunk
@@ -129,8 +224,27 @@ export class TurtleInterpreter {
         const globalT = currentDistance / this.totalTrunkLength;
         sectionRadius = this.radiusAt(globalT);
       } else {
-        // Branches: use per-segment taper (for now)
-        sectionRadius = radius * (1 - this.config.taper * tLocal);
+        // Branches: taper behavior depends on whether this is a terminal segment
+        if (isTerminal) {
+          // Terminal branches: taper fully (can go to point)
+          // Use full taper value, allowing it to go to 0
+          sectionRadius = radius * (1 - this.config.taper * tLocal);
+          // Ensure radius doesn't go negative
+          sectionRadius = Math.max(sectionRadius, 0);
+        } else {
+          // Non-terminal branches: use per-segment taper with depth-based scaling and minimum radius
+          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+          // Reduce taper effect at higher depths
+          const depthTaperScale = 1 - this.currentState.depth * 0.1;
+          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+          const taperedRadius = radius * (1 - effectiveTaper * tLocal);
+          
+          // Calculate minimum radius for this depth level
+          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+          
+          sectionRadius = Math.max(taperedRadius, minRadius);
+        }
       }
       
       // Apply twist: rotate around Y axis (roll) as we progress along the branch
@@ -199,12 +313,32 @@ export class TurtleInterpreter {
     }
     
     // Generate indices with correct winding order (counter-clockwise for front-facing)
-    for (let i = 0; i < sectionCount; i++) {
+    // Adjust index calculation if we reused the first ring
+    // When shouldReuseFirstRing is true, we generated rings from ringStart=1 to sectionCount (inclusive)
+    // That's sectionCount rings generated, plus 1 reused ring = sectionCount + 1 total rings
+    // We need to connect sectionCount pairs: (0,1), (1,2), ..., (sectionCount-1, sectionCount)
+    const numConnections = sectionCount;
+    for (let i = 0; i < numConnections; i++) {
       for (let j = 0; j < faceCount; j++) {
-        const current = startIndex + i * faceCount + j;
-        const next = startIndex + i * faceCount + ((j + 1) % faceCount);
-        const currentNext = startIndex + (i + 1) * faceCount + j;
-        const nextNext = startIndex + (i + 1) * faceCount + ((j + 1) % faceCount);
+        // Calculate ring indices - if we reused first ring, ring 0 uses firstRingIndex, otherwise use startIndex
+        let ring0Index: number;
+        let ring1Index: number;
+        
+        if (shouldReuseFirstRing) {
+          // First ring was reused, so ring 0 is at firstRingIndex
+          // Ring 1 is at startIndex (first generated ring), ring 2 at startIndex + faceCount, etc.
+          ring0Index = (i === 0) ? firstRingIndex : (startIndex + (i - 1) * faceCount);
+          ring1Index = startIndex + i * faceCount;
+        } else {
+          // Normal case: both rings are newly generated
+          ring0Index = startIndex + i * faceCount;
+          ring1Index = startIndex + (i + 1) * faceCount;
+        }
+        
+        const current = ring0Index + j;
+        const next = ring0Index + ((j + 1) % faceCount);
+        const currentNext = ring1Index + j;
+        const nextNext = ring1Index + ((j + 1) % faceCount);
         
         // First triangle - reversed winding order
         this.branches.indices.push(current, currentNext, next);
@@ -212,6 +346,13 @@ export class TurtleInterpreter {
         this.branches.indices.push(next, currentNext, nextNext);
       }
     }
+    
+    // Store the last ring index for next segment connectivity
+    // Last ring is at: startIndex + (sectionCount - ringStart) * faceCount
+    const lastRingIndex = shouldReuseFirstRing 
+      ? (startIndex + (sectionCount - 1) * faceCount)
+      : (startIndex + sectionCount * faceCount);
+    this.lastSegmentEndRingIndex = lastRingIndex;
     
     // Update turtle position to final position along curved path
     this.currentState.position.copy(currentPos);
@@ -224,6 +365,12 @@ export class TurtleInterpreter {
     }
     this.currentState.orientation.copy(finalOrientation);
     
+    // Store end state for next segment connectivity
+    this.lastSegmentEndPosition = currentPos.clone();
+    this.lastSegmentEndOrientation = finalOrientation.clone();
+    this.lastSegmentEndRadius = this.currentState.radius;
+    this.lastSegmentEndTwist = this.currentState.cumulativeTwist;
+    
     // Update cumulative distance for trunk
     if (this.currentState.depth === 0) {
       this.currentState.cumulativeDistance = currentDistance;
@@ -234,9 +381,26 @@ export class TurtleInterpreter {
       const globalT = this.currentState.cumulativeDistance / this.totalTrunkLength;
       this.currentState.radius = this.radiusAt(globalT);
     } else {
-      // Branches: use per-segment taper
-      const endpointRadius = radius * (1 - this.config.taper);
-      this.currentState.radius = Math.max(endpointRadius, radius * 0.01); // Ensure minimum radius
+      // Branches: taper behavior depends on whether this is a terminal segment
+      if (isTerminal) {
+        // Terminal branches: taper fully (can go to point)
+        // Use full taper value, allowing it to go to 0
+        this.currentState.radius = radius * (1 - this.config.taper);
+        // Ensure radius doesn't go negative
+        this.currentState.radius = Math.max(this.currentState.radius, 0);
+      } else {
+        // Non-terminal branches: use per-segment taper with depth-based scaling and minimum radius
+        const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+        const depthTaperScale = 1 - this.currentState.depth * 0.1;
+        const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+        const endpointRadius = radius * (1 - effectiveTaper);
+        
+        // Calculate minimum radius for this depth level
+        const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+        const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+        
+        this.currentState.radius = Math.max(endpointRadius, minRadius);
+      }
     }
     
     // Accumulate twist so next segment continues from where this one ended
@@ -247,7 +411,13 @@ export class TurtleInterpreter {
    * Update the configuration (useful when parameters change)
    */
   updateConfig(config: Partial<TurtleConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { 
+      ...this.config, 
+      ...config,
+      // Ensure defaults are preserved for optional parameters
+      branchTaperScale: config.branchTaperScale ?? this.config.branchTaperScale ?? 0.5,
+      minRadiusRatio: config.minRadiusRatio ?? this.config.minRadiusRatio ?? 0.1,
+    };
     // Reinitialize RNG if seed changed
     if (config.seed !== undefined) {
       this.rng = seedrandom(String(config.seed));
@@ -524,6 +694,13 @@ export class TurtleInterpreter {
     
     this.stateStack = [];
     
+    // Reset connectivity tracking
+    this.lastSegmentEndRingIndex = -1;
+    this.lastSegmentEndPosition = null;
+    this.lastSegmentEndOrientation = null;
+    this.lastSegmentEndRadius = 0;
+    this.lastSegmentEndTwist = 0;
+    
     let i = 0;
     while (i < lSystemString.length) {
       const char = lSystemString[i];
@@ -533,6 +710,7 @@ export class TurtleInterpreter {
           // Forward command - might have parameters F(length) or just F
           let length = this.currentState.length;
           let radius = this.currentState.radius;
+          let fEndIndex = i;
           
           // Check if there are parameters
           if (i + 1 < lSystemString.length && lSystemString[i + 1] === '(') {
@@ -552,10 +730,17 @@ export class TurtleInterpreter {
               }
             }
             
+            fEndIndex = j + 1;
             i = j + 1;
           } else {
+            fEndIndex = i + 1;
             i++;
           }
+          
+          // Check if this is a terminal segment (no child branches)
+          // For branches (depth > 0), check if there are child branches after this F
+          // For trunk (depth === 0), always false (uses global taper)
+          const isTerminal = this.currentState.depth > 0 && !this.hasChildBranches(lSystemString, fEndIndex);
           
           // Apply force (branches only, depth > 0)
           // Note: Gnarliness is now applied inside drawSegment() for smooth continuity
@@ -564,7 +749,10 @@ export class TurtleInterpreter {
             const up = new THREE.Vector3(0, 1, 0);
             
             // Optionally scale force by radius (thinner branches = stronger force)
-            const forceHere = this.config.upForce * (1 - radius / this.config.initialRadius);
+            // Guard against division by zero
+            const forceHere = this.config.initialRadius > 0
+              ? this.config.upForce * (1 - radius / this.config.initialRadius)
+              : this.config.upForce;
             
             // Lerp toward up
             const blendedForward = forward.clone().lerp(up, forceHere).normalize();
@@ -583,7 +771,7 @@ export class TurtleInterpreter {
             this.currentState.orientation.z = newEuler.z;
           }
           
-          this.drawSegment(length, radius);
+          this.drawSegment(length, radius, isTerminal);
           break;
         }
         
@@ -737,6 +925,13 @@ export class TurtleInterpreter {
           this.currentState.length *= this.config.lengthScale;
           this.currentState.radius *= this.config.radiusScale;
           this.currentState.depth++;
+          
+          // Reset connectivity tracking when branching (new branch starts fresh)
+          this.lastSegmentEndRingIndex = -1;
+          this.lastSegmentEndPosition = null;
+          this.lastSegmentEndOrientation = null;
+          this.lastSegmentEndRadius = 0;
+          this.lastSegmentEndTwist = 0;
           
           i++;
           break;

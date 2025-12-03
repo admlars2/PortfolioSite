@@ -61,6 +61,13 @@ export class Tree {
   }
 
   generate(): void {
+    // Update L-system generator config in case it changed
+    // Include seed to ensure RNG is reinitialized for deterministic results
+    this.lSystemGenerator.updateConfig({
+      ...this.options.lSystem,
+      seed: this.options.seed,
+    });
+    
     // Update turtle interpreter config in case it changed
     // Include seed to ensure RNG is reinitialized for deterministic results
     this.turtleInterpreter.updateConfig({

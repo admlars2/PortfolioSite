@@ -159,14 +159,14 @@ export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
   // Turtle interpreter configuration
   const turtleConfig = useMemo(
     () => ({
-      initialLength: 1.0,
+      initialLength: 1.5,
       initialRadius: 0.15,
       lengthScale: 0.8,
       radiusScale: 0.7,
       angleStep: Math.PI / 6, // 30 degrees
       sectionCount: 8,
       faceCount: 8,
-      taper: 0.2,
+      taper: 1,
       twist: 0.0,
     }),
     []
@@ -191,7 +191,7 @@ export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
   return (
     <div 
       className="absolute inset-0 overflow-hidden hidden sm:block" 
-      style={{ zIndex: 0, pointerEvents: isRotating ? 'auto' : 'none', cursor: isRotating ? 'grabbing' : 'grab' }}
+      style={{ zIndex: 0, pointerEvents: 'auto', cursor: isRotating ? 'grabbing' : 'grab' }}
     >
       <Canvas
         camera={{ position: [2, 1, 6], fov: 50 }}

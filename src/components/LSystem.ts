@@ -35,6 +35,17 @@ export class LSystemGenerator {
   }
 
   /**
+   * Update the configuration (useful when parameters change)
+   */
+  updateConfig(config: Partial<LSystemConfig>): void {
+    this.config = { ...this.config, ...config };
+    // Reinitialize RNG if seed changed
+    if (config.seed !== undefined) {
+      this.rng = seedrandom(String(config.seed));
+    }
+  }
+
+  /**
    * Parse a parametric symbol from string like "T(1.0, 0)"
    */
   private parseSymbol(symbolStr: string): ParametricSymbol | null {
@@ -92,7 +103,13 @@ export class LSystemGenerator {
         case '+': return (numA + numB).toString();
         case '-': return (numA - numB).toString();
         case '*': return (numA * numB).toString();
-        case '/': return (numA / numB).toString();
+        case '/': 
+          // Guard against division by zero
+          if (numB === 0) {
+            console.warn(`Division by zero in L-system production: ${match}`);
+            return match; // Return original expression if division by zero
+          }
+          return (numA / numB).toString();
         default: return match;
       }
     });
@@ -187,7 +204,8 @@ export class LSystemGenerator {
         const char = currentString[i];
         
         // Handle turtle symbols - copy them as-is
-        if (/[\[\]+\-&^]/.test(char)) {
+        // Includes: [ ] (push/pop), + - (yaw), & ^ (pitch), \ / (roll)
+        if (/[\[\]+\-&^\\/]/.test(char)) {
           newString += char;
           i++;
           continue;
