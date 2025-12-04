@@ -127,11 +127,13 @@ export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
       iterations: 4,
       seed,
       rules: [
-        // Trunk forks into 2 leaders when size > 0.3
+        // Trunk forks into branches when size > 0.3
+        // Add pitch rotations to create 3D branching: & (pitch down) and ^ (pitch up)
+        // Use 3 branches: one left with pitch down, one right with pitch down, one forward with pitch up
         {
           symbol: 'T',
           condition: (params) => params[0] > 0.3, // s > 0.3
-          production: 'F(s)[+0.4 T(s * 0.8, d + 1)][-0.4 T(s * 0.8, d + 1)]',
+          production: 'F(s)[+0.4&0.2 T(s * 0.8, d + 1)][-0.4&0.2 T(s * 0.8, d + 1)][^0.2 T(s * 0.8, d + 1)]',
         },
         // Trunk stops when size <= 0.3
         {
@@ -140,10 +142,11 @@ export default function TreeBackground({ seed = 42 }: TreeBackgroundProps) {
           production: 'F(s)',
         },
         // Side branches continue branching when size > 0.2
+        // Add pitch rotations for 3D branching
         {
           symbol: 'B',
           condition: (params) => params[0] > 0.2, // s > 0.2
-          production: 'F(s)[+0.3 B(s * 0.7, d + 1)][-0.3 B(s * 0.7, d + 1)]',
+          production: 'F(s)[+0.3&0.2 B(s * 0.7, d + 1)][-0.3&0.2 B(s * 0.7, d + 1)][^0.2 B(s * 0.7, d + 1)]',
         },
         // Side branches stop when size <= 0.2
         {

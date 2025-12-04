@@ -9,6 +9,7 @@ export interface TurtleState {
   depth: number;
   cumulativeTwist: number; // Track cumulative twist across segments
   cumulativeDistance: number; // Track cumulative distance along trunk for global taper
+  branchCumulativeDistance?: number; // Track cumulative distance along current branch (for branches only)
 }
 
 export interface TurtleConfig {
@@ -34,6 +35,7 @@ export class TurtleInterpreter {
   private currentState: TurtleState;
   private rng: seedrandom.PRNG;
   private totalTrunkLength: number = 0; // Total length of trunk for global taper calculation
+  private branchLengths: Map<string, number> = new Map(); // Map branch start positions to total branch lengths
   private lastSegmentEndRingIndex: number = -1; // Index of last ring of previous segment for connectivity
   private lastSegmentEndPosition: THREE.Vector3 | null = null; // Position of last segment end
   private lastSegmentEndOrientation: THREE.Euler | null = null; // Orientation of last segment end
@@ -108,9 +110,12 @@ export class TurtleInterpreter {
   }
 
   /**
-   * Check if the next commands after current position indicate child branches
-   * Returns true if there are child branches (indicated by '[' after this F command)
-   * For branches (depth > 0), a segment has children if there's a '[' before the next ']' or end
+   * Check if the next commands after current position indicate this F is not terminal
+   * Returns true if:
+   *   - There are child branches (indicated by '[' after this F command), OR
+   *   - There's another segment (F/T/B) after this F before the branch closes
+   * Returns false if this F is the last segment before the branch closes (terminal)
+   * For branches (depth > 0), a segment is terminal if it's the last thing before ']'
    */
   private hasChildBranches(lSystemString: string, currentIndex: number): boolean {
     // Only check for children if we're at branch depth (depth > 0)
@@ -121,27 +126,39 @@ export class TurtleInterpreter {
     
     let i = currentIndex;
     let bracketDepth = 0; // Track bracket depth relative to starting point
+    // We start at bracketDepth 0, meaning we're at the same level as the F we're checking
     
-    // Skip whitespace and rotation commands, looking for '[' or ']'
+    // Look for '[' (child branches), ']' (branch end), or other F/T/B commands (branch continues)
     while (i < lSystemString.length) {
       const char = lSystemString[i];
       
       if (char === '[') {
-        // Found a branch start at current depth - this segment has children
+        // Found a branch start
         if (bracketDepth === 0) {
+          // At the same level as our F - this F has children (not terminal)
           return true;
         }
+        // Inside a nested branch - increment depth and continue
         bracketDepth++;
         i++;
       } else if (char === ']') {
         bracketDepth--;
-        // If we close more brackets than we've seen, we're back at parent level
+        // If bracketDepth goes negative, we've closed more brackets than we opened
+        // This means we've closed the branch containing our F - this F is terminal
         if (bracketDepth < 0) {
-          return false; // No children found before closing parent branch
+          return false;
         }
+        // If bracketDepth is 0, we've closed a nested branch and are back at the same level
+        // If bracketDepth > 0, we're still inside nested branches
+        // In both cases, continue looking for children or continuation
         i++;
       } else if (char === 'F' || char === 'T' || char === 'B') {
-        // Check if this is a parametric symbol like F(params), T(params), etc.
+        // Found another segment command
+        if (bracketDepth === 0) {
+          // At the same level as our F - branch continues with another segment (not terminal)
+          return true;
+        }
+        // Inside a nested branch - skip this segment and continue
         if (i + 1 < lSystemString.length && lSystemString[i + 1] === '(') {
           // Skip parametric symbol including its parameters
           let j = i + 2;
@@ -155,13 +172,30 @@ export class TurtleInterpreter {
         } else {
           i++;
         }
+      } else if (/[+\-&^\\/]/.test(char)) {
+        // Rotation commands (+ - & ^ \ /) - skip the command and any numeric parameter
+        // Handle sequences like +angle&angle or ^angle correctly
+        i++;
+        // Skip optional numeric parameter (e.g., +0.4, -0.3, &0.2)
+        // Handle negative numbers and decimal points
+        if (i < lSystemString.length) {
+          // Skip optional sign
+          if (lSystemString[i] === '-' || lSystemString[i] === '+') {
+            i++;
+          }
+          // Skip digits and decimal point
+          while (i < lSystemString.length && /[\d.]/.test(lSystemString[i])) {
+            i++;
+          }
+        }
       } else {
-        // Rotation commands (+ - & ^ \ /) and other characters - just skip
+        // Other characters (whitespace, numbers, etc.) - just skip
         i++;
       }
     }
     
-    return false; // No child branches found before end of string
+    // Reached end of string without finding children or continuation - this is terminal
+    return false;
   }
 
   /**
@@ -178,6 +212,43 @@ export class TurtleInterpreter {
     const startTwist = this.currentState.cumulativeTwist; // Start from accumulated twist
     const startDistance = this.currentState.cumulativeDistance; // Start distance for global taper
     
+    // For branches, get the branch start position to look up total branch length
+    let branchTotalLength: number | undefined = undefined;
+    let branchStartDistance: number = 0;
+    if (this.currentState.depth > 0 && this.stateStack.length > 0) {
+      // Find the branch start position (position when we entered this branch)
+      const branchStartPos = this.stateStack[this.stateStack.length - 1].position;
+      const branchKey = `${branchStartPos.x.toFixed(6)},${branchStartPos.y.toFixed(6)},${branchStartPos.z.toFixed(6)}`;
+      branchTotalLength = this.branchLengths.get(branchKey);
+      
+      // Get the branch cumulative distance at the start of this segment
+      branchStartDistance = this.currentState.branchCumulativeDistance ?? 0;
+    }
+    
+    // Calculate the expected start radius for this segment based on branch taper
+    // This ensures radius continuity between segments
+    let expectedStartRadius = radius;
+    if (this.currentState.depth > 0 && branchTotalLength !== undefined && branchTotalLength > 0) {
+      const branchT = branchStartDistance / branchTotalLength;
+      const clampedT = Math.max(0, Math.min(1, branchT));
+      
+      // Use the same radius calculation as in the loop to ensure continuity
+      if (isTerminal) {
+        expectedStartRadius = radius * (1 - this.config.taper * clampedT);
+        expectedStartRadius = Math.max(expectedStartRadius, 0);
+      } else {
+        const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+        const depthTaperScale = 1 - this.currentState.depth * 0.1;
+        const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+        const baseRadius = radius;
+        const tipRadius = baseRadius * (1 - effectiveTaper);
+        const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
+        const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+        const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+        expectedStartRadius = Math.max(taperedRadius, minRadius);
+      }
+    }
+    
     // Check if we should reuse the last ring from previous segment for smooth connectivity
     // Only reuse if: same depth, positions match (within tolerance), orientations match, and radius matches
     const shouldReuseFirstRing = 
@@ -188,7 +259,7 @@ export class TurtleInterpreter {
       Math.abs(startOrientation.x - this.lastSegmentEndOrientation.x) < 0.001 &&
       Math.abs(startOrientation.y - this.lastSegmentEndOrientation.y) < 0.001 &&
       Math.abs(startOrientation.z - this.lastSegmentEndOrientation.z) < 0.001 && // Orientation matches
-      Math.abs(radius - this.lastSegmentEndRadius) < 0.001 && // Radius matches
+      Math.abs(expectedStartRadius - this.lastSegmentEndRadius) < 0.001 && // Radius matches (use expected radius)
       Math.abs(startTwist - this.lastSegmentEndTwist) < 0.001; // Twist matches
     
     const startIndex = this.branches.verts.length / 3;
@@ -211,6 +282,7 @@ export class TurtleInterpreter {
     // Track position along curved path for smooth continuity
     let currentPos = startPos.clone();
     let currentDistance = startDistance;
+    let currentBranchDistance = branchStartDistance;
     
     // Generate vertices for all sections (skip first ring if reusing)
     const ringStart = shouldReuseFirstRing ? 1 : 0;
@@ -224,26 +296,50 @@ export class TurtleInterpreter {
         const globalT = currentDistance / this.totalTrunkLength;
         sectionRadius = this.radiusAt(globalT);
       } else {
-        // Branches: taper behavior depends on whether this is a terminal segment
-        if (isTerminal) {
-          // Terminal branches: taper fully (can go to point)
-          // Use full taper value, allowing it to go to 0
-          sectionRadius = radius * (1 - this.config.taper * tLocal);
-          // Ensure radius doesn't go negative
-          sectionRadius = Math.max(sectionRadius, 0);
+        // Branches: use per-branch taper with continuous t along the branch
+        if (branchTotalLength !== undefined && branchTotalLength > 0) {
+          // Calculate t along the entire branch (0 = branch start, 1 = branch end)
+          const branchT = currentBranchDistance / branchTotalLength;
+          // Clamp t to [0, 1] to handle floating point errors
+          const clampedT = Math.max(0, Math.min(1, branchT));
+          
+          if (isTerminal) {
+            // Terminal branches: taper fully to point
+            // Linear interpolation from baseRadius to 0
+            const baseRadius = radius;
+            sectionRadius = baseRadius * (1 - this.config.taper * clampedT);
+            sectionRadius = Math.max(sectionRadius, 0);
+          } else {
+            // Non-terminal branches: use reduced taper with minimum radius
+            const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+            const depthTaperScale = 1 - this.currentState.depth * 0.1;
+            const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+            
+            const baseRadius = radius;
+            const tipRadius = baseRadius * (1 - effectiveTaper);
+            
+            // Calculate minimum radius for this depth level
+            const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+            const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+            
+            // Linear interpolation between baseRadius and tipRadius, clamped to minRadius
+            const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
+            sectionRadius = Math.max(taperedRadius, minRadius);
+          }
         } else {
-          // Non-terminal branches: use per-segment taper with depth-based scaling and minimum radius
-          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
-          // Reduce taper effect at higher depths
-          const depthTaperScale = 1 - this.currentState.depth * 0.1;
-          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
-          const taperedRadius = radius * (1 - effectiveTaper * tLocal);
-          
-          // Calculate minimum radius for this depth level
-          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
-          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
-          
-          sectionRadius = Math.max(taperedRadius, minRadius);
+          // Fallback: use per-segment taper if branch length not available
+          if (isTerminal) {
+            sectionRadius = radius * (1 - this.config.taper * tLocal);
+            sectionRadius = Math.max(sectionRadius, 0);
+          } else {
+            const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+            const depthTaperScale = 1 - this.currentState.depth * 0.1;
+            const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+            const taperedRadius = radius * (1 - effectiveTaper * tLocal);
+            const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+            const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+            sectionRadius = Math.max(taperedRadius, minRadius);
+          }
         }
       }
       
@@ -273,6 +369,10 @@ export class TurtleInterpreter {
         // Update cumulative distance for trunk
         if (this.currentState.depth === 0) {
           currentDistance += sectionLength;
+        }
+        // Update cumulative distance for branch
+        if (this.currentState.depth > 0) {
+          currentBranchDistance += sectionLength;
         }
       }
       
@@ -376,30 +476,55 @@ export class TurtleInterpreter {
       this.currentState.cumulativeDistance = currentDistance;
     }
     
-    // Update radius based on global taper for trunk, or per-segment for branches
+    // Update cumulative distance for branch
+    if (this.currentState.depth > 0) {
+      this.currentState.branchCumulativeDistance = currentBranchDistance;
+    }
+    
+    // Update radius based on global taper for trunk, or per-branch taper for branches
     if (this.currentState.depth === 0 && this.totalTrunkLength > 0) {
       const globalT = this.currentState.cumulativeDistance / this.totalTrunkLength;
       this.currentState.radius = this.radiusAt(globalT);
     } else {
-      // Branches: taper behavior depends on whether this is a terminal segment
-      if (isTerminal) {
-        // Terminal branches: taper fully (can go to point)
-        // Use full taper value, allowing it to go to 0
-        this.currentState.radius = radius * (1 - this.config.taper);
-        // Ensure radius doesn't go negative
-        this.currentState.radius = Math.max(this.currentState.radius, 0);
+      // Branches: use per-branch taper with continuous t along the branch
+      if (branchTotalLength !== undefined && branchTotalLength > 0) {
+        const branchT = currentBranchDistance / branchTotalLength;
+        const clampedT = Math.max(0, Math.min(1, branchT));
+        
+        if (isTerminal) {
+          // Terminal branches: taper fully to point
+          const baseRadius = radius;
+          this.currentState.radius = baseRadius * (1 - this.config.taper * clampedT);
+          this.currentState.radius = Math.max(this.currentState.radius, 0);
+        } else {
+          // Non-terminal branches: use reduced taper with minimum radius
+          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+          const depthTaperScale = 1 - this.currentState.depth * 0.1;
+          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+          
+          const baseRadius = radius;
+          const tipRadius = baseRadius * (1 - effectiveTaper);
+          
+          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+          
+          const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
+          this.currentState.radius = Math.max(taperedRadius, minRadius);
+        }
       } else {
-        // Non-terminal branches: use per-segment taper with depth-based scaling and minimum radius
-        const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
-        const depthTaperScale = 1 - this.currentState.depth * 0.1;
-        const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
-        const endpointRadius = radius * (1 - effectiveTaper);
-        
-        // Calculate minimum radius for this depth level
-        const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
-        const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
-        
-        this.currentState.radius = Math.max(endpointRadius, minRadius);
+        // Fallback: use per-segment taper if branch length not available
+        if (isTerminal) {
+          this.currentState.radius = radius * (1 - this.config.taper);
+          this.currentState.radius = Math.max(this.currentState.radius, 0);
+        } else {
+          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+          const depthTaperScale = 1 - this.currentState.depth * 0.1;
+          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
+          const endpointRadius = radius * (1 - effectiveTaper);
+          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+          this.currentState.radius = Math.max(endpointRadius, minRadius);
+        }
       }
     }
     
@@ -667,11 +792,245 @@ export class TurtleInterpreter {
   }
 
   /**
+   * Measure branch lengths and store them in branchLengths map
+   * Key: branch start position as string "x,y,z"
+   */
+  private measureBranchLengths(lSystemString: string): void {
+    this.branchLengths.clear();
+    
+    const measureState: TurtleState = {
+      position: new THREE.Vector3(0, 0, 0),
+      orientation: new THREE.Euler(0, 0, 0),
+      length: this.config.initialLength,
+      radius: this.config.initialRadius,
+      depth: 0,
+      cumulativeTwist: 0,
+      cumulativeDistance: 0,
+    };
+    const measureStack: TurtleState[] = [];
+    const branchStartStack: { position: THREE.Vector3; cumulativeDistance: number }[] = [];
+
+    let i = 0;
+    while (i < lSystemString.length) {
+      const char = lSystemString[i];
+
+      switch (char) {
+        case 'F': {
+          let length = measureState.length;
+          if (i + 1 < lSystemString.length && lSystemString[i + 1] === '(') {
+            let j = i + 2;
+            while (j < lSystemString.length && lSystemString[j] !== ')') {
+              j++;
+            }
+            const params = this.extractParams(lSystemString.substring(i, j + 1));
+            if (params.length > 0) {
+              length = params[0];
+            }
+            i = j + 1;
+          } else {
+            i++;
+          }
+
+          // Track branch length if we're in a branch (depth > 0)
+          if (measureState.depth > 0 && branchStartStack.length > 0) {
+            const branchStart = branchStartStack[branchStartStack.length - 1];
+            branchStart.cumulativeDistance += length;
+          }
+
+          const forward = new THREE.Vector3(0, 1, 0)
+            .applyEuler(measureState.orientation)
+            .multiplyScalar(length);
+          measureState.position.add(forward);
+          break;
+        }
+
+        case '+': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.z += angle;
+          break;
+        }
+
+        case '-': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.z -= angle;
+          break;
+        }
+
+        case '&': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.x += angle;
+          break;
+        }
+
+        case '^': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.x -= angle;
+          break;
+        }
+
+        case '\\': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.y += angle;
+          break;
+        }
+
+        case '/': {
+          let angle = this.config.angleStep;
+          if (i + 1 < lSystemString.length && /[\d.]/.test(lSystemString[i + 1])) {
+            let j = i + 1;
+            let angleStr = '';
+            while (j < lSystemString.length && /[\d.]/.test(lSystemString[j])) {
+              angleStr += lSystemString[j];
+              j++;
+            }
+            const parsedAngle = parseFloat(angleStr);
+            if (!isNaN(parsedAngle)) {
+              angle = parsedAngle;
+            }
+            i = j;
+          } else {
+            i++;
+          }
+          measureState.orientation.y -= angle;
+          break;
+        }
+
+        case '[': {
+          measureStack.push({
+            position: measureState.position.clone(),
+            orientation: measureState.orientation.clone(),
+            length: measureState.length,
+            radius: measureState.radius,
+            depth: measureState.depth,
+            cumulativeTwist: measureState.cumulativeTwist,
+            cumulativeDistance: measureState.cumulativeDistance,
+          });
+
+          // Track branch start if entering a branch (depth > 0 after increment)
+          const branchStartPos = measureState.position.clone();
+          branchStartStack.push({ position: branchStartPos, cumulativeDistance: 0 });
+
+          measureState.length *= this.config.lengthScale;
+          measureState.radius *= this.config.radiusScale;
+          measureState.depth++;
+          i++;
+          break;
+        }
+
+        case ']': {
+          // Store branch length before popping
+          if (branchStartStack.length > 0) {
+            const branchStart = branchStartStack.pop()!;
+            const branchKey = `${branchStart.position.x.toFixed(6)},${branchStart.position.y.toFixed(6)},${branchStart.position.z.toFixed(6)}`;
+            this.branchLengths.set(branchKey, branchStart.cumulativeDistance);
+          }
+
+          if (measureStack.length > 0) {
+            const savedState = measureStack.pop()!;
+            measureState.position = savedState.position;
+            measureState.orientation = savedState.orientation;
+            measureState.length = savedState.length;
+            measureState.radius = savedState.radius;
+            measureState.depth = savedState.depth;
+            measureState.cumulativeTwist = savedState.cumulativeTwist;
+            measureState.cumulativeDistance = savedState.cumulativeDistance;
+          }
+          i++;
+          break;
+        }
+
+        default: {
+          i++;
+          break;
+        }
+      }
+    }
+  }
+
+  /**
    * Interpret an L-system string and generate geometry
    */
   interpret(lSystemString: string): void {
     // Pass 1: Measure total trunk length for global taper
     this.totalTrunkLength = this.measurePath(lSystemString);
+    
+    // Pass 1.5: Measure branch lengths for per-branch taper
+    this.measureBranchLengths(lSystemString);
     
     // Pass 2: Generate geometry with global taper
     // Reset state
@@ -690,6 +1049,7 @@ export class TurtleInterpreter {
       depth: 0,
       cumulativeTwist: 0,
       cumulativeDistance: 0,
+      branchCumulativeDistance: undefined,
     };
     
     this.stateStack = [];
@@ -757,18 +1117,40 @@ export class TurtleInterpreter {
             // Lerp toward up
             const blendedForward = forward.clone().lerp(up, forceHere).normalize();
             
-            // Calculate rotation needed to go from current forward to blended forward
-            const quaternion = new THREE.Quaternion().setFromUnitVectors(forward, blendedForward);
+            // Check if vectors are parallel or nearly parallel (dot product close to 1 or -1)
+            const dotProduct = forward.dot(blendedForward);
+            const angleBetween = Math.acos(Math.max(-1, Math.min(1, dotProduct)));
             
-            // Apply rotation to current orientation
-            const currentQuaternion = new THREE.Quaternion().setFromEuler(this.currentState.orientation);
-            currentQuaternion.multiply(quaternion);
-            
-            // Convert back to Euler
-            const newEuler = new THREE.Euler().setFromQuaternion(currentQuaternion);
-            this.currentState.orientation.x = newEuler.x;
-            this.currentState.orientation.y = newEuler.y;
-            this.currentState.orientation.z = newEuler.z;
+            // Only apply rotation if there's a meaningful angle difference
+            if (angleBetween > 0.001) {
+              // Calculate rotation needed to go from current forward to blended forward
+              // Use a more robust method that handles edge cases
+              const quaternion = new THREE.Quaternion();
+              
+              // Handle case where vectors are nearly opposite (180 degrees)
+              if (dotProduct < -0.999) {
+                // Vectors are nearly opposite - use perpendicular axis for rotation
+                const perpendicular = new THREE.Vector3(1, 0, 0).cross(forward);
+                if (perpendicular.length() < 0.001) {
+                  perpendicular.set(0, 0, 1).cross(forward);
+                }
+                perpendicular.normalize();
+                quaternion.setFromAxisAngle(perpendicular, Math.PI);
+              } else {
+                // Normal case - use setFromUnitVectors
+                quaternion.setFromUnitVectors(forward, blendedForward);
+              }
+              
+              // Apply rotation to current orientation using quaternion math
+              const currentQuaternion = new THREE.Quaternion().setFromEuler(this.currentState.orientation);
+              currentQuaternion.multiply(quaternion);
+              
+              // Convert back to Euler with proper order to avoid gimbal lock
+              const newEuler = new THREE.Euler().setFromQuaternion(currentQuaternion, 'YXZ');
+              this.currentState.orientation.x = newEuler.x;
+              this.currentState.orientation.y = newEuler.y;
+              this.currentState.orientation.z = newEuler.z;
+            }
           }
           
           this.drawSegment(length, radius, isTerminal);
@@ -919,12 +1301,16 @@ export class TurtleInterpreter {
             depth: this.currentState.depth,
             cumulativeTwist: this.currentState.cumulativeTwist,
             cumulativeDistance: this.currentState.cumulativeDistance,
+            branchCumulativeDistance: this.currentState.branchCumulativeDistance,
           });
           
           // Scale down for next level
           this.currentState.length *= this.config.lengthScale;
           this.currentState.radius *= this.config.radiusScale;
           this.currentState.depth++;
+          
+          // Initialize branch cumulative distance for new branch
+          this.currentState.branchCumulativeDistance = 0;
           
           // Reset connectivity tracking when branching (new branch starts fresh)
           this.lastSegmentEndRingIndex = -1;
@@ -949,6 +1335,7 @@ export class TurtleInterpreter {
               depth: savedState.depth,
               cumulativeTwist: savedState.cumulativeTwist,
               cumulativeDistance: savedState.cumulativeDistance,
+              branchCumulativeDistance: savedState.branchCumulativeDistance,
             };
           }
           i++;
@@ -978,4 +1365,3 @@ export class TurtleInterpreter {
     return geometry;
   }
 }
-

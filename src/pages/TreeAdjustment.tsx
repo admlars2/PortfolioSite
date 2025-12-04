@@ -184,10 +184,12 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
         seed,
         rules: [
           // Trunk forks into branches when size > 0.3
+          // Add pitch rotations to create 3D branching: & (pitch down) and ^ (pitch up)
+          // Use 3 branches: one left with pitch down, one right with pitch down, one forward with pitch up
           {
             symbol: 'T',
             condition: (params) => params[0] > 0.3,
-            production: `F(s)[+${angleStr} B(s * 0.8, d + 1)][-${angleStr} B(s * 0.8, d + 1)] T(s * 0.9, d + 1)`,
+            production: `F(s)[+${angleStr}&${angleStr} B(s * 0.8, d + 1)][-${angleStr}&${angleStr} B(s * 0.8, d + 1)][^${angleStr} B(s * 0.8, d + 1)] T(s * 0.9, d + 1)`,
           },
           // Trunk stops when size <= 0.3
           {
@@ -196,10 +198,11 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
             production: 'F(s)',
           },
           // Branches continue branching when size > 0.2
+          // Add pitch rotations for 3D branching
           {
             symbol: 'B',
             condition: (params) => params[0] > 0.2,
-            production: `F(s)[+${angleStr} B(s * 0.7, d + 1)][-${angleStr} B(s * 0.7, d + 1)]`,
+            production: `F(s)[+${angleStr}&${angleStr} B(s * 0.7, d + 1)][-${angleStr}&${angleStr} B(s * 0.7, d + 1)][^${angleStr} B(s * 0.7, d + 1)]`,
           },
           // Branches stop when size <= 0.2
           {
