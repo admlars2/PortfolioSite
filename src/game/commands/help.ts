@@ -10,6 +10,18 @@ Movement:
   e, east      - Move east
   w, west      - Move west
 
+Location:
+  enter          - Enter the building on your current tile
+  exit, leave    - Exit the current location
+  location, loc  - Examine your current location and available actions
+
+People:
+  people, p    - List people nearby or in your current location
+
+Player:
+  stats, status - View your stats
+  inventory, inv, i - View your inventory
+
 System:
   help, h, ?   - Show this help message
   audio        - Configure audio settings

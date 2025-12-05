@@ -97,6 +97,23 @@ export class TurtleInterpreter {
   }
 
   /**
+   * Single source of truth for branch radius calculation
+   * Computes radius at a given distance along a branch using consistent taper logic
+   */
+  private computeBranchRadius(params: {
+    distanceFromBranchStart: number;   // cumulative distance along this branch
+    branchLength: number;              // total length of this branch
+    baseRadius: number;                // radius at branch root
+    taper: number;                     // 0..1, 1 = fully down to tipRadius
+    minRadius: number;                 // minimum radius clamp
+  }): number {
+    const tRaw = params.branchLength > 0 ? params.distanceFromBranchStart / params.branchLength : 1;
+    const t = Math.max(0, Math.min(1, tRaw)); // Clamp to [0, 1]
+    const tipRadius = Math.max(params.baseRadius * (1 - params.taper), params.minRadius);
+    return THREE.MathUtils.lerp(params.baseRadius, tipRadius, t);
+  }
+
+  /**
    * Extract parameters from a symbol like "F(1.5)" or "T(1.0, 2)"
    */
   private extractParams(symbolStr: string): number[] {
@@ -206,6 +223,7 @@ export class TurtleInterpreter {
     const sectionCount = this.config.sectionCount;
     const faceCount = this.config.faceCount;
     const sectionLength = length / sectionCount;
+    const minTipRadius = Math.max(this.config.initialRadius * 0.02, 1e-4); // keep connectivity while appearing pointy
     
     const startPos = this.currentState.position.clone();
     const startOrientation = this.currentState.orientation.clone();
@@ -225,28 +243,34 @@ export class TurtleInterpreter {
       branchStartDistance = this.currentState.branchCumulativeDistance ?? 0;
     }
     
+    // Calculate branch base radius (radius at branch root)
+    let branchBaseRadius: number | undefined = undefined;
+    if (this.currentState.depth > 0 && this.stateStack.length > 0) {
+      // Branch base radius is the parent radius scaled by radiusScale
+      const parentState = this.stateStack[this.stateStack.length - 1];
+      branchBaseRadius = parentState.radius * this.config.radiusScale;
+    }
+    
     // Calculate the expected start radius for this segment based on branch taper
     // This ensures radius continuity between segments
     let expectedStartRadius = radius;
-    if (this.currentState.depth > 0 && branchTotalLength !== undefined && branchTotalLength > 0) {
-      const branchT = branchStartDistance / branchTotalLength;
-      const clampedT = Math.max(0, Math.min(1, branchT));
+    if (this.currentState.depth > 0 && branchTotalLength !== undefined && branchTotalLength > 0 && branchBaseRadius !== undefined) {
+      const distanceFromBranchStart = branchStartDistance;
+      const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+      const depthTaperScale = 1 - this.currentState.depth * 0.1;
+      const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
       
-      // Use the same radius calculation as in the loop to ensure continuity
-      if (isTerminal) {
-        expectedStartRadius = radius * (1 - this.config.taper * clampedT);
-        expectedStartRadius = Math.max(expectedStartRadius, 0);
-      } else {
-        const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
-        const depthTaperScale = 1 - this.currentState.depth * 0.1;
-        const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
-        const baseRadius = radius;
-        const tipRadius = baseRadius * (1 - effectiveTaper);
-        const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
-        const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
-        const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
-        expectedStartRadius = Math.max(taperedRadius, minRadius);
-      }
+      const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+      const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+      
+      // Use same helper as loop to ensure continuity
+      expectedStartRadius = this.computeBranchRadius({
+        distanceFromBranchStart,
+        branchLength: branchTotalLength,
+        baseRadius: branchBaseRadius,
+        taper: effectiveTaper,
+        minRadius,
+      });
     }
     
     // Check if we should reuse the last ring from previous segment for smooth connectivity
@@ -270,11 +294,13 @@ export class TurtleInterpreter {
       firstRingIndex = this.lastSegmentEndRingIndex;
     }
     
-    // Generate gnarliness rotations for this segment (trunk only)
+    // Generate gnarliness rotations for this segment (all depths, scaled)
     let yawJitter = 0;
     let pitchJitter = 0;
-    if (this.config.gnarliness && this.config.gnarliness > 0 && this.currentState.depth === 0) {
-      const amp = this.config.gnarliness * 0.1; // Scale to ~0-0.1 radians
+    if (this.config.gnarliness && this.config.gnarliness > 0) {
+      // Dampen gnarliness slightly as depth increases to avoid overly noisy twigs
+      const depthScale = 1 / (1 + this.currentState.depth * 0.5);
+      const amp = this.config.gnarliness * 0.1 * depthScale; // Scale to ~0-0.1 radians
       yawJitter = (this.rng() - 0.5) * 2 * amp;
       pitchJitter = (this.rng() - 0.5) * 2 * amp;
     }
@@ -286,6 +312,9 @@ export class TurtleInterpreter {
     
     // Generate vertices for all sections (skip first ring if reusing)
     const ringStart = shouldReuseFirstRing ? 1 : 0;
+    // When reusing the first ring, use its actual radius instead of expected radius
+    let lastSectionRadius = shouldReuseFirstRing ? this.lastSegmentEndRadius : expectedStartRadius;
+    let lastAdjustedOrientation = startOrientation.clone();
     for (let i = ringStart; i <= sectionCount; i++) {
       const tLocal = i / sectionCount; // Local t within segment (0-1)
       
@@ -297,40 +326,34 @@ export class TurtleInterpreter {
         sectionRadius = this.radiusAt(globalT);
       } else {
         // Branches: use per-branch taper with continuous t along the branch
-        if (branchTotalLength !== undefined && branchTotalLength > 0) {
-          // Calculate t along the entire branch (0 = branch start, 1 = branch end)
-          const branchT = currentBranchDistance / branchTotalLength;
-          // Clamp t to [0, 1] to handle floating point errors
-          const clampedT = Math.max(0, Math.min(1, branchT));
+        if (branchTotalLength !== undefined && branchTotalLength > 0 && branchBaseRadius !== undefined) {
+          const distanceFromBranchStart = currentBranchDistance;
+          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+          const depthTaperScale = 1 - this.currentState.depth * 0.1;
+          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
           
-          if (isTerminal) {
-            // Terminal branches: taper fully to point
-            // Linear interpolation from baseRadius to 0
-            const baseRadius = radius;
-            sectionRadius = baseRadius * (1 - this.config.taper * clampedT);
-            sectionRadius = Math.max(sectionRadius, 0);
-          } else {
-            // Non-terminal branches: use reduced taper with minimum radius
-            const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
-            const depthTaperScale = 1 - this.currentState.depth * 0.1;
-            const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
-            
-            const baseRadius = radius;
-            const tipRadius = baseRadius * (1 - effectiveTaper);
-            
-            // Calculate minimum radius for this depth level
-            const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
-            const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
-            
-            // Linear interpolation between baseRadius and tipRadius, clamped to minRadius
-            const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
-            sectionRadius = Math.max(taperedRadius, minRadius);
-          }
+          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+          
+          // Use unified helper for both terminal and non-terminal branches
+          sectionRadius = this.computeBranchRadius({
+            distanceFromBranchStart,
+            branchLength: branchTotalLength,
+            baseRadius: branchBaseRadius,
+            taper: effectiveTaper,
+            minRadius,
+          });
         } else {
           // Fallback: use per-segment taper if branch length not available
+          // (Keep existing fallback logic)
           if (isTerminal) {
             sectionRadius = radius * (1 - this.config.taper * tLocal);
-            sectionRadius = Math.max(sectionRadius, 0);
+            // Force a tiny but non-zero radius at the very tip to keep connectivity
+            if (i === sectionCount) {
+              sectionRadius = Math.min(Math.max(sectionRadius, minTipRadius), minTipRadius);
+            } else {
+              sectionRadius = Math.max(sectionRadius, 0);
+            }
           } else {
             const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
             const depthTaperScale = 1 - this.currentState.depth * 0.1;
@@ -340,6 +363,15 @@ export class TurtleInterpreter {
             const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
             sectionRadius = Math.max(taperedRadius, minRadius);
           }
+        }
+      }
+
+      // Ensure terminal rings always shrink to a small, connected tip radius
+      if (isTerminal) {
+        // Avoid any growth within the segment to keep taper monotonic
+        sectionRadius = Math.min(sectionRadius, lastSectionRadius);
+        if (i === sectionCount) {
+          sectionRadius = minTipRadius; // final ring to near-point
         }
       }
       
@@ -356,14 +388,35 @@ export class TurtleInterpreter {
       const gnarlinessOrientation = startOrientation.clone();
       gnarlinessOrientation.z += yawJitter * tLocal; // Gradually apply yaw
       gnarlinessOrientation.x += pitchJitter * tLocal; // Gradually apply pitch
+
+      // Apply upward force smoothly along the segment (branches only) by blending forward toward +Y
+      let adjustedOrientation = gnarlinessOrientation;
+      if (this.config.upForce && this.config.upForce > 0 && this.currentState.depth > 0) {
+        const forwardVec = new THREE.Vector3(0, 1, 0).applyEuler(gnarlinessOrientation);
+        const up = new THREE.Vector3(0, 1, 0);
+        const radiusRatio = this.config.initialRadius > 0 ? radius / this.config.initialRadius : 0;
+        const forceHere = this.config.upForce * (1 - radiusRatio);
+        const blendedForward = forwardVec.clone().lerp(up, forceHere).normalize();
+
+        const dotProduct = forwardVec.dot(blendedForward);
+        if (Math.abs(dotProduct) < 0.9999) {
+          const q = new THREE.Quaternion().setFromUnitVectors(forwardVec, blendedForward);
+          const baseQ = new THREE.Quaternion().setFromEuler(gnarlinessOrientation);
+          baseQ.multiply(q);
+          adjustedOrientation = new THREE.Euler().setFromQuaternion(baseQ, 'YXZ');
+        }
+      }
+
+      // Track orientation used this step for reuse later
+      lastAdjustedOrientation = adjustedOrientation;
       
       // Use current position (calculated from previous iteration)
       const sectionPos = currentPos.clone();
       
       // Update current position and distance for next iteration (move forward along curve)
       if (i < sectionCount) {
-        // Calculate direction at current point along curve
-        const direction = new THREE.Vector3(0, 1, 0).applyEuler(gnarlinessOrientation);
+        // Calculate direction at current point along curve (with gnarliness + upward force)
+        const direction = new THREE.Vector3(0, 1, 0).applyEuler(adjustedOrientation);
         // Move forward along the curve
         currentPos.add(direction.multiplyScalar(sectionLength));
         // Update cumulative distance for trunk
@@ -375,6 +428,9 @@ export class TurtleInterpreter {
           currentBranchDistance += sectionLength;
         }
       }
+
+      // Track final radius for continuity and caps
+      lastSectionRadius = sectionRadius;
       
       // Generate vertices around the circumference
       for (let j = 0; j < faceCount; j++) {
@@ -390,16 +446,16 @@ export class TurtleInterpreter {
         // Apply twist rotation to local vertex
         localVertex.applyQuaternion(twistQuaternion);
         
-        // Transform to world space using gnarliness orientation
+        // Transform to world space using adjusted orientation
         const vertex = localVertex
           .clone()
-          .applyEuler(gnarlinessOrientation)
+          .applyEuler(adjustedOrientation)
           .add(sectionPos);
         
         // Normal points outward - also apply twist
         const localNormal = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)).normalize();
         localNormal.applyQuaternion(twistQuaternion);
-        const normal = localNormal.applyEuler(gnarlinessOrientation);
+        const normal = localNormal.applyEuler(adjustedOrientation);
         
         const uv = new THREE.Vector2(
           j / faceCount,
@@ -447,6 +503,29 @@ export class TurtleInterpreter {
       }
     }
     
+    // Terminal cap: close the tip to a point so the mesh stays connected
+    if (isTerminal) {
+      const tipIndex = this.branches.verts.length / 3;
+      const tipDirection = new THREE.Vector3(0, 1, 0).applyEuler(adjustedOrientation).normalize();
+      const tipPosition = currentPos.clone();
+
+      // Add a near-point vertex (radius ~0) to cap the branch
+      this.branches.verts.push(tipPosition.x, tipPosition.y, tipPosition.z);
+      this.branches.normals.push(tipDirection.x, tipDirection.y, tipDirection.z);
+      this.branches.uvs.push(0.5, 1);
+
+      // The last ring start depends on whether we reused the first ring
+      const lastRingStart = shouldReuseFirstRing
+        ? startIndex + (sectionCount - 1) * faceCount
+        : startIndex + sectionCount * faceCount;
+      for (let j = 0; j < faceCount; j++) {
+        const current = lastRingStart + j;
+        const next = lastRingStart + ((j + 1) % faceCount);
+        // Winding so normals face outward from the surface toward the tip
+        this.branches.indices.push(current, next, tipIndex);
+      }
+    }
+
     // Store the last ring index for next segment connectivity
     // Last ring is at: startIndex + (sectionCount - ringStart) * faceCount
     const lastRingIndex = shouldReuseFirstRing 
@@ -457,18 +536,14 @@ export class TurtleInterpreter {
     // Update turtle position to final position along curved path
     this.currentState.position.copy(currentPos);
     
-    // Update orientation to match where we ended (with gnarliness)
-    const finalOrientation = startOrientation.clone();
-    if (this.config.gnarliness && this.config.gnarliness > 0 && this.currentState.depth === 0) {
-      finalOrientation.z += yawJitter; // Full gnarliness applied at end
-      finalOrientation.x += pitchJitter;
-    }
+    // Update orientation to match where we ended (with gnarliness/upward force)
+    const finalOrientation = lastAdjustedOrientation.clone();
     this.currentState.orientation.copy(finalOrientation);
     
     // Store end state for next segment connectivity
     this.lastSegmentEndPosition = currentPos.clone();
     this.lastSegmentEndOrientation = finalOrientation.clone();
-    this.lastSegmentEndRadius = this.currentState.radius;
+    this.lastSegmentEndRadius = isTerminal ? minTipRadius : lastSectionRadius;
     this.lastSegmentEndTwist = this.currentState.cumulativeTwist;
     
     // Update cumulative distance for trunk
@@ -487,32 +562,26 @@ export class TurtleInterpreter {
       this.currentState.radius = this.radiusAt(globalT);
     } else {
       // Branches: use per-branch taper with continuous t along the branch
-      if (branchTotalLength !== undefined && branchTotalLength > 0) {
-        const branchT = currentBranchDistance / branchTotalLength;
-        const clampedT = Math.max(0, Math.min(1, branchT));
+      if (branchTotalLength !== undefined && branchTotalLength > 0 && branchBaseRadius !== undefined) {
+        const distanceFromBranchStart = currentBranchDistance;
+        const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
+        const depthTaperScale = 1 - this.currentState.depth * 0.1;
+        const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
         
-        if (isTerminal) {
-          // Terminal branches: taper fully to point
-          const baseRadius = radius;
-          this.currentState.radius = baseRadius * (1 - this.config.taper * clampedT);
-          this.currentState.radius = Math.max(this.currentState.radius, 0);
-        } else {
-          // Non-terminal branches: use reduced taper with minimum radius
-          const branchTaper = this.config.taper * (this.config.branchTaperScale ?? 0.5);
-          const depthTaperScale = 1 - this.currentState.depth * 0.1;
-          const effectiveTaper = branchTaper * Math.max(0, depthTaperScale);
-          
-          const baseRadius = radius;
-          const tipRadius = baseRadius * (1 - effectiveTaper);
-          
-          const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
-          const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
-          
-          const taperedRadius = baseRadius * (1 - clampedT) + tipRadius * clampedT;
-          this.currentState.radius = Math.max(taperedRadius, minRadius);
-        }
+        const depthRadiusScale = Math.pow(this.config.radiusScale, this.currentState.depth);
+        const minRadius = this.config.initialRadius * depthRadiusScale * (this.config.minRadiusRatio ?? 0.1);
+        
+        // Use same helper to match last ring radius exactly
+        this.currentState.radius = this.computeBranchRadius({
+          distanceFromBranchStart,
+          branchLength: branchTotalLength,
+          baseRadius: branchBaseRadius,
+          taper: effectiveTaper,
+          minRadius,
+        });
       } else {
         // Fallback: use per-segment taper if branch length not available
+        // (Keep existing fallback logic)
         if (isTerminal) {
           this.currentState.radius = radius * (1 - this.config.taper);
           this.currentState.radius = Math.max(this.currentState.radius, 0);
@@ -1101,57 +1170,6 @@ export class TurtleInterpreter {
           // For branches (depth > 0), check if there are child branches after this F
           // For trunk (depth === 0), always false (uses global taper)
           const isTerminal = this.currentState.depth > 0 && !this.hasChildBranches(lSystemString, fEndIndex);
-          
-          // Apply force (branches only, depth > 0)
-          // Note: Gnarliness is now applied inside drawSegment() for smooth continuity
-          if (this.config.upForce && this.config.upForce > 0 && this.currentState.depth > 0) {
-            const forward = new THREE.Vector3(0, 1, 0).applyEuler(this.currentState.orientation);
-            const up = new THREE.Vector3(0, 1, 0);
-            
-            // Optionally scale force by radius (thinner branches = stronger force)
-            // Guard against division by zero
-            const forceHere = this.config.initialRadius > 0
-              ? this.config.upForce * (1 - radius / this.config.initialRadius)
-              : this.config.upForce;
-            
-            // Lerp toward up
-            const blendedForward = forward.clone().lerp(up, forceHere).normalize();
-            
-            // Check if vectors are parallel or nearly parallel (dot product close to 1 or -1)
-            const dotProduct = forward.dot(blendedForward);
-            const angleBetween = Math.acos(Math.max(-1, Math.min(1, dotProduct)));
-            
-            // Only apply rotation if there's a meaningful angle difference
-            if (angleBetween > 0.001) {
-              // Calculate rotation needed to go from current forward to blended forward
-              // Use a more robust method that handles edge cases
-              const quaternion = new THREE.Quaternion();
-              
-              // Handle case where vectors are nearly opposite (180 degrees)
-              if (dotProduct < -0.999) {
-                // Vectors are nearly opposite - use perpendicular axis for rotation
-                const perpendicular = new THREE.Vector3(1, 0, 0).cross(forward);
-                if (perpendicular.length() < 0.001) {
-                  perpendicular.set(0, 0, 1).cross(forward);
-                }
-                perpendicular.normalize();
-                quaternion.setFromAxisAngle(perpendicular, Math.PI);
-              } else {
-                // Normal case - use setFromUnitVectors
-                quaternion.setFromUnitVectors(forward, blendedForward);
-              }
-              
-              // Apply rotation to current orientation using quaternion math
-              const currentQuaternion = new THREE.Quaternion().setFromEuler(this.currentState.orientation);
-              currentQuaternion.multiply(quaternion);
-              
-              // Convert back to Euler with proper order to avoid gimbal lock
-              const newEuler = new THREE.Euler().setFromQuaternion(currentQuaternion, 'YXZ');
-              this.currentState.orientation.x = newEuler.x;
-              this.currentState.orientation.y = newEuler.y;
-              this.currentState.orientation.z = newEuler.z;
-            }
-          }
           
           this.drawSegment(length, radius, isTerminal);
           break;

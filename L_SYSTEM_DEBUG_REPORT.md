@@ -206,3 +206,8 @@ const forceHere = this.config.initialRadius > 0
 5. **Use consistent distance tracking** throughout (cumulativeDistance vs branchCumulativeDistance)
 6. **Consider pre-calculating all radii** before generating geometry to ensure consistency
 
+## Update 2025-12-04
+- Terminal branches now taper to a tiny epsilon and are capped with a tip vertex so meshes stay connected while still looking pointed.
+- The final ring radius is tracked explicitly and reused for continuity checks, reducing seams between consecutive segments.
+- Tip caps use the final segment position to align triangles with the generated ring.
+

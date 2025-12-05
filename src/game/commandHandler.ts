@@ -3,6 +3,13 @@ import { movementHandlers } from './commands/movement';
 import { handleHelp } from './commands/help';
 import { handleAudio } from './commands/audio';
 import { handleMap } from './commands/map';
+import { handleEnter, handleExit } from './commands/location';
+import { handlePeople } from './commands/people';
+import { handleStats } from './commands/stats';
+import { handleInventory } from './commands/inventory';
+import { handleLook } from './commands/look';
+import { handleSeed } from './commands/seed';
+import { handleClear, resetClearConfirmations } from './commands/clear';
 
 export interface CommandResult {
   success: boolean;
@@ -37,6 +44,36 @@ const commandHandlers: Record<string, CommandHandler> = {
   
   // Map command
   map: handleMap,
+  
+  // Location commands
+  enter: handleEnter,
+  exit: handleExit,
+  leave: handleExit,
+  
+  // Location command (replaces look)
+  location: handleLook,
+  loc: handleLook,
+  look: handleLook, // Keep for backwards compatibility
+  
+  // People command
+  people: handlePeople,
+  p: handlePeople,
+  
+  // Stats command
+  stats: handleStats,
+  status: handleStats,
+  
+  // Inventory command
+  inventory: handleInventory,
+  inv: handleInventory,
+  i: handleInventory,
+  
+  // Debug commands
+  seed: handleSeed,
+  
+  // Clear save command
+  clear: handleClear,
+  clearsave: handleClear,
 };
 
 export function parseCommand(input: string): { command: string; args: string[] } {
@@ -63,6 +100,11 @@ export function executeCommand(
       success: false,
       message: 'Please enter a command.',
     };
+  }
+  
+  // Reset clear confirmations if any other command is executed
+  if (command !== 'clear' && command !== 'clearsave') {
+    resetClearConfirmations();
   }
   
   const handler = commandHandlers[command];

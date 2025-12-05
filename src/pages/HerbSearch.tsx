@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useKeyboardSounds } from '@/hooks/useKeyboardSounds';
 import { createGameState, saveGameState, type GameState } from '@/game/gameState';
 import { executeCommand } from '@/game/commandHandler';
-import { initializeMap } from '@/game/map';
+import { initializeMap, initializeMapNoise } from '@/game/map';
 
 interface OutputLine {
   type: 'command' | 'output' | 'error';
@@ -19,10 +19,14 @@ export default function HerbSearch() {
     if (!state.mapSeed) {
       const mapConfig = initializeMap();
       return { ...state, mapSeed: mapConfig.seed };
+    } else {
+      // Initialize noise with existing map seed
+      initializeMapNoise(state.mapSeed);
     }
     return state;
   });
   const [outputHistory, setOutputHistory] = useState<OutputLine[]>([]);
+  const [isWaitingForName, setIsWaitingForName] = useState(!gameState.playerName);
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -33,6 +37,18 @@ export default function HerbSearch() {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Show opening sequence if no player name
+  useEffect(() => {
+    if (isWaitingForName && outputHistory.length === 0) {
+      setOutputHistory([{
+        type: 'output',
+        content: 'Welcome to Herb Search!\n\nWhat is your name?',
+        timestamp: Date.now(),
+      }]);
+    }
+    // Note: Opening story after name is set is handled in handleSubmit
+  }, [isWaitingForName, outputHistory.length]);
 
   // Save game state when it changes
   useEffect(() => {
@@ -104,6 +120,45 @@ export default function HerbSearch() {
       return;
     }
 
+    // Handle name input if waiting for name
+    if (isWaitingForName) {
+      const playerName = commandInput;
+      if (playerName.length < 1) {
+        addOutput('error', 'Please enter a valid name.');
+        setInput('');
+        return;
+      }
+      
+      // Add command to output
+      addOutput('command', `> ${commandInput}`);
+      
+      // Set player name
+      setGameState(prev => {
+        const newState = { ...prev, playerName };
+        saveGameState(newState);
+        return newState;
+      });
+      
+      setIsWaitingForName(false);
+      
+      // Show opening story
+      const openingMessage = `\nNice to meet you, ${playerName}!\n\n` +
+        `You are inside grandma's house.\n\n` +
+        `Grandma has called you downstairs. The warm aroma of herbs fills the air.\n\n` +
+        `Type "help" to see all available commands.\n` +
+        `Try typing "talk grandma" to start your adventure!`;
+      addOutput('output', openingMessage);
+      
+      // Clear input
+      setInput('');
+      
+      // Refocus input
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+      return;
+    }
+
     // Add command to output
     addOutput('command', `> ${commandInput}`);
 
@@ -118,6 +173,15 @@ export default function HerbSearch() {
       if (result.stateUpdate) {
         setGameState(prev => {
           const newState = { ...prev, ...result.stateUpdate };
+          // If clear command succeeded, also reset the component state
+          if (commandInput.toLowerCase() === 'clear' || commandInput.toLowerCase() === 'clearsave') {
+            if (result.message.includes('Save data cleared')) {
+              // Reset to initial state after a short delay to show the message
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+            }
+          }
           return newState;
         });
       }
@@ -193,7 +257,7 @@ export default function HerbSearch() {
                          shadow-sm hover:shadow-md focus:shadow-lg
                          caret-transparent
                          placeholder:ml-[2px]"
-                placeholder="Enter command..."
+                placeholder={isWaitingForName ? "Enter your name..." : "Enter command..."}
                 autoComplete="off"
                 spellCheck="false"
               />
@@ -218,8 +282,9 @@ export default function HerbSearch() {
           {/* Output area */}
           <div 
             ref={outputRef}
-            className="mt-8 min-h-[200px] max-h-[400px] bg-card border border-default rounded-lg p-6 
-                        font-mono text-sm text-secondary overflow-y-auto"
+            className="mt-8 min-h-[200px] max-h-[600px] bg-card border border-default rounded-lg p-6 
+                        font-mono text-xs text-secondary overflow-y-auto"
+            style={{ fontFamily: 'monospace' }}
           >
             {outputHistory.length === 0 ? (
               <div className="text-center text-secondary/60">
