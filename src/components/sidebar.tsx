@@ -64,6 +64,14 @@ export default function Sidebar() {
       
       const start = scrollContainer.scrollTop;
       const distance = target - start;
+
+      // If there's nothing to scroll, resolve immediately to avoid blocking user scroll
+      if (Math.abs(distance) < 1) {
+        scrollContainer.scrollTop = target;
+        resolve();
+        return;
+      }
+
       let startTime: number | null = null;
 
       // Ease-in-out cubic function for smooth acceleration/deceleration
@@ -190,7 +198,11 @@ export default function Sidebar() {
       if (hash) {
         scrollToSection(hash);
       } else {
-        smoothScrollTo(0);
+        // Avoid animated scroll on initial load so user can scroll immediately
+        const scrollContainer = document.querySelector('main') as HTMLElement | null;
+        if (scrollContainer) {
+          scrollContainer.scrollTop = 0;
+        }
       }
     }, 100);
 

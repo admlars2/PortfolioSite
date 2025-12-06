@@ -10,11 +10,13 @@ import { handleInventory } from './commands/inventory';
 import { handleLook } from './commands/look';
 import { handleSeed } from './commands/seed';
 import { handleClear, resetClearConfirmations } from './commands/clear';
+import { handleTalk } from './commands/talk';
 
 export interface CommandResult {
   success: boolean;
   message: string;
   stateUpdate?: Partial<GameState>;
+  updateState?: GameState; // Full state update (for async handlers that modify state)
 }
 
 export type CommandHandler = (
@@ -58,6 +60,10 @@ const commandHandlers: Record<string, CommandHandler> = {
   // People command
   people: handlePeople,
   p: handlePeople,
+  
+  // Talk command
+  talk: handleTalk,
+  t: handleTalk,
   
   // Stats command
   stats: handleStats,

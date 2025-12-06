@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useKeyboardSounds } from '@/hooks/useKeyboardSounds';
 import { createGameState, saveGameState, type GameState } from '@/game/gameState';
 import { executeCommand } from '@/game/commandHandler';
-import { initializeMap, initializeMapNoise } from '@/game/map';
+import { initializeMap, initializeMapNoise, loadTilesFromState } from '@/game/map';
 
 interface OutputLine {
   type: 'command' | 'output' | 'error';
@@ -22,6 +22,10 @@ export default function HerbSearch() {
     } else {
       // Initialize noise with existing map seed
       initializeMapNoise(state.mapSeed);
+      // Load saved tiles into registry
+      if (state.savedTiles && Object.keys(state.savedTiles).length > 0) {
+        loadTilesFromState(state.savedTiles);
+      }
     }
     return state;
   });
@@ -170,7 +174,11 @@ export default function HerbSearch() {
       addOutput(result.success ? 'output' : 'error', result.message);
 
       // Update game state if there's a state update
-      if (result.stateUpdate) {
+      if (result.updateState) {
+        // Full state update (for async handlers like talk)
+        setGameState(result.updateState);
+      } else if (result.stateUpdate) {
+        // Partial state update
         setGameState(prev => {
           const newState = { ...prev, ...result.stateUpdate };
           // If clear command succeeded, also reset the component state

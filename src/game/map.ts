@@ -26,6 +26,26 @@ const tileRegistry = new Map<string, TileData>();
 // Global noise function for terrain generation (initialized with default seed)
 let mapNoiseFunction: ((x: number, y: number) => number) | null = null;
 
+/**
+ * Load tiles from saved game state into the registry
+ */
+export function loadTilesFromState(savedTiles: { [tileKey: string]: TileData }): void {
+  for (const [key, tile] of Object.entries(savedTiles)) {
+    tileRegistry.set(key, tile);
+  }
+}
+
+/**
+ * Get all tiles currently in the registry as an object (for saving)
+ */
+export function getAllTiles(): { [tileKey: string]: TileData } {
+  const tiles: { [tileKey: string]: TileData } = {};
+  for (const [key, tile] of tileRegistry.entries()) {
+    tiles[key] = tile;
+  }
+  return tiles;
+}
+
 // Initialize noise function with a seed
 export function initializeMapNoise(seed: string): void {
   mapNoiseFunction = createMapNoise(seed);

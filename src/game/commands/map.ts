@@ -63,7 +63,8 @@ export const handleMap: CommandHandler = (args, state) => {
   
   // Default map command - show map display
   const { x, y } = state.playerPosition;
-  const loadedTiles = state.tilesLoaded || [];
+  // Get tile keys from saved tiles
+  const loadedTiles = Object.keys(state.savedTiles || {});
   const mapDisplay = renderMap(x, y, loadedTiles, zoomLevel);
   
   let message = 'Map';

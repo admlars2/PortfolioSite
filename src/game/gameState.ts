@@ -1,5 +1,11 @@
 import type { PlayerStats } from './player';
 import { defaultPlayerStats, Inventory } from './player';
+import type { TileData } from './map';
+import { getAllTiles } from './map';
+
+export interface ConversationHistory {
+  [personId: string]: Array<{ role: 'user' | 'assistant'; content: string }>;
+}
 
 export interface GameState {
   playerName?: string;
@@ -15,8 +21,9 @@ export interface GameState {
   companions: string[]; // Array of person IDs
   playerStats: PlayerStats;
   inventory: Inventory;
-  tilesLoaded: string[]; // Array of tile keys (e.g., "0,0", "1,0") - tiles that have been loaded/generated
+  savedTiles: { [tileKey: string]: TileData }; // Actual tile data saved by tile key
   visitedTiles: string[]; // Array of tile keys - tiles the player has visited
+  conversationHistory?: ConversationHistory; // Chat history with characters (keyed by person ID)
 }
 
 export const initialGameState: GameState = {
@@ -31,8 +38,9 @@ export const initialGameState: GameState = {
   companions: [],
   playerStats: { ...defaultPlayerStats },
   inventory: new Inventory(),
-  tilesLoaded: ['0,0'], // Start with home loaded
+  savedTiles: {}, // Start with empty tiles - will be populated as tiles are generated
   visitedTiles: ['0,0'], // Start with home visited
+  conversationHistory: {}, // Initialize empty conversation history (keyed by person ID)
 };
 
 export function createGameState(): GameState {
@@ -58,9 +66,11 @@ export function createGameState(): GameState {
           : new Inventory(),
         // Handle player name migration
         playerName: parsed.playerName || undefined,
-        // Handle tiles migration
-        tilesLoaded: parsed.tilesLoaded || parsed.visitedTiles || ['0,0'],
+        // Handle tiles migration - support both old (tilesLoaded) and new (savedTiles) formats
+        savedTiles: parsed.savedTiles || {},
         visitedTiles: parsed.visitedTiles || ['0,0'],
+        // Handle conversation history migration (keyed by person ID)
+        conversationHistory: parsed.conversationHistory || {},
       };
       return state;
     } catch {
@@ -72,9 +82,11 @@ export function createGameState(): GameState {
 
 export function saveGameState(state: GameState): void {
   // Convert inventory to JSON format for storage
+  // Include all tiles from registry in saved state
   const stateToSave = {
     ...state,
     inventory: state.inventory.toJSON(),
+    savedTiles: getAllTiles(), // Save all tiles from registry
   };
   localStorage.setItem('herb-search-game-state', JSON.stringify(stateToSave));
 }

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { Tree } from '../components/tree';
 import { useTheme } from '../contexts/ThemeContext';
 import type { LSystemConfig } from '../components/LSystem';
+import { useTranslation } from 'react-i18next';
 
 interface TreeMeshProps {
   tree: Tree;
@@ -151,6 +152,7 @@ function ZoomControls() {
 interface TreeAdjustmentProps {}
 
 export default function TreeAdjustment({}: TreeAdjustmentProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [isRotating, setIsRotating] = useState(false);
   const [seed, setSeed] = useState(42);
@@ -255,12 +257,12 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
       <div className="flex-1 flex">
         {/* Controls Panel */}
         <div className="w-80 p-6 border-r border-sidebar overflow-y-auto">
-          <h1 className="text-2xl font-bold mb-6">Tree Adjustment</h1>
+          <h1 className="text-2xl font-bold mb-6">{t('treeAdjustment.title')}</h1>
           
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Seed: {seed}
+                {t('treeAdjustment.seed', { value: seed })}
               </label>
               <input
                 type="range"
@@ -274,7 +276,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Initial Length: {initialLength.toFixed(2)}
+                {t('treeAdjustment.initialLength', { value: initialLength.toFixed(2) })}
               </label>
               <input
                 type="range"
@@ -289,7 +291,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Initial Radius: {initialRadius.toFixed(3)}
+                {t('treeAdjustment.initialRadius', { value: initialRadius.toFixed(3) })}
               </label>
               <input
                 type="range"
@@ -304,7 +306,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Section Count: {sectionCount}
+                {t('treeAdjustment.sectionCount', { value: sectionCount })}
               </label>
               <input
                 type="range"
@@ -319,7 +321,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Face Count: {faceCount}
+                {t('treeAdjustment.faceCount', { value: faceCount })}
               </label>
               <input
                 type="range"
@@ -333,8 +335,8 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2" title="Taper affects trunk fully; branches taper at reduced rate with minimum radius protection">
-                Taper: {taper.toFixed(2)} (trunk: full, branches: reduced)
+              <label className="block text-sm font-medium mb-2" title={t('treeAdjustment.taperHint')}>
+                {t('treeAdjustment.taper', { value: taper.toFixed(2) })}
               </label>
               <input
                 type="range"
@@ -349,7 +351,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Twist: {(twist * 180 / Math.PI).toFixed(1)}°
+                {t('treeAdjustment.twist', { value: (twist * 180 / Math.PI).toFixed(1) })}
               </label>
               <input
                 type="range"
@@ -364,7 +366,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Segments: {segments}
+                {t('treeAdjustment.segments', { value: segments })}
               </label>
               <input
                 type="range"
@@ -379,7 +381,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Angle Step: {(angleStep * 180 / Math.PI).toFixed(1)}°
+                {t('treeAdjustment.angleStep', { value: (angleStep * 180 / Math.PI).toFixed(1) })}
               </label>
               <input
                 type="range"
@@ -394,7 +396,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div className="pt-4 border-t border-sidebar">
               <label className="block text-sm font-medium mb-2">
-                Gnarliness: {gnarliness.toFixed(2)}
+                {t('treeAdjustment.gnarliness', { value: gnarliness.toFixed(2) })}
               </label>
               <input
                 type="range"
@@ -409,7 +411,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Upward Force: {upForce.toFixed(2)}
+                {t('treeAdjustment.upwardForce', { value: upForce.toFixed(2) })}
               </label>
               <input
                 type="range"
@@ -430,7 +432,7 @@ export default function TreeAdjustment({}: TreeAdjustmentProps) {
                   onChange={(e) => setWireframe(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm font-medium">Wireframe Mode</span>
+                <span className="text-sm font-medium">{t('treeAdjustment.wireframe')}</span>
               </label>
             </div>
           </div>

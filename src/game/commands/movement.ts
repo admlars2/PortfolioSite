@@ -1,6 +1,6 @@
 import type { CommandResult } from '../commandHandler';
 import type { GameState } from '../gameState';
-import { getVisibleTiles, getTileKey, getTileAt } from '../map';
+import { getVisibleTiles, getTileKey, getTileAt, getAllTiles } from '../map';
 
 // Individual direction handlers
 function handleNorth(state: GameState): CommandResult {
@@ -15,13 +15,8 @@ function handleNorth(state: GameState): CommandResult {
   const newX = state.playerPosition.x;
   const newPosition = { x: newX, y: newY };
   
-  // Load all visible tiles from new position
-  const visibleTiles = getVisibleTiles(newX, newY);
-  const loadedTilesSet = new Set(state.tilesLoaded || []);
-  visibleTiles.forEach(tile => {
-    loadedTilesSet.add(getTileKey(tile.x, tile.y));
-  });
-  const updatedLoaded = Array.from(loadedTilesSet);
+  // Load all visible tiles from new position (this generates them if needed)
+  getVisibleTiles(newX, newY);
   
   // Mark current tile as visited
   const tileKey = getTileKey(newX, newY);
@@ -34,12 +29,15 @@ function handleNorth(state: GameState): CommandResult {
   const tile = getTileAt(newX, newY);
   const locationInfo = tile.description + (tile.buildingName ? `\n\nBuilding: ${tile.buildingName}` : '');
   
+  // Save all tiles from registry (includes newly generated ones)
+  const savedTiles = getAllTiles();
+  
   return {
     success: true,
     message: 'You move north.\n\n' + locationInfo,
     stateUpdate: {
       playerPosition: newPosition,
-      tilesLoaded: updatedLoaded,
+      savedTiles,
       visitedTiles: updatedVisited,
     },
   };
@@ -57,13 +55,8 @@ function handleSouth(state: GameState): CommandResult {
   const newX = state.playerPosition.x;
   const newPosition = { x: newX, y: newY };
   
-  // Load all visible tiles from new position
-  const visibleTiles = getVisibleTiles(newX, newY);
-  const loadedTilesSet = new Set(state.tilesLoaded || []);
-  visibleTiles.forEach(tile => {
-    loadedTilesSet.add(getTileKey(tile.x, tile.y));
-  });
-  const updatedLoaded = Array.from(loadedTilesSet);
+  // Load all visible tiles from new position (this generates them if needed)
+  getVisibleTiles(newX, newY);
   
   // Mark current tile as visited
   const tileKey = getTileKey(newX, newY);
@@ -76,12 +69,15 @@ function handleSouth(state: GameState): CommandResult {
   const tile = getTileAt(newX, newY);
   const locationInfo = tile.description + (tile.buildingName ? `\n\nBuilding: ${tile.buildingName}` : '');
   
+  // Save all tiles from registry (includes newly generated ones)
+  const savedTiles = getAllTiles();
+  
   return {
     success: true,
     message: 'You move south.\n\n' + locationInfo,
     stateUpdate: {
       playerPosition: newPosition,
-      tilesLoaded: updatedLoaded,
+      savedTiles,
       visitedTiles: updatedVisited,
     },
   };
@@ -99,13 +95,8 @@ function handleEast(state: GameState): CommandResult {
   const newY = state.playerPosition.y;
   const newPosition = { x: newX, y: newY };
   
-  // Load all visible tiles from new position
-  const visibleTiles = getVisibleTiles(newX, newY);
-  const loadedTilesSet = new Set(state.tilesLoaded || []);
-  visibleTiles.forEach(tile => {
-    loadedTilesSet.add(getTileKey(tile.x, tile.y));
-  });
-  const updatedLoaded = Array.from(loadedTilesSet);
+  // Load all visible tiles from new position (this generates them if needed)
+  getVisibleTiles(newX, newY);
   
   // Mark current tile as visited
   const tileKey = getTileKey(newX, newY);
@@ -118,12 +109,15 @@ function handleEast(state: GameState): CommandResult {
   const tile = getTileAt(newX, newY);
   const locationInfo = tile.description + (tile.buildingName ? `\n\nBuilding: ${tile.buildingName}` : '');
   
+  // Save all tiles from registry (includes newly generated ones)
+  const savedTiles = getAllTiles();
+  
   return {
     success: true,
     message: 'You move east.\n\n' + locationInfo,
     stateUpdate: {
       playerPosition: newPosition,
-      tilesLoaded: updatedLoaded,
+      savedTiles,
       visitedTiles: updatedVisited,
     },
   };
@@ -141,13 +135,8 @@ function handleWest(state: GameState): CommandResult {
   const newY = state.playerPosition.y;
   const newPosition = { x: newX, y: newY };
   
-  // Load all visible tiles from new position
-  const visibleTiles = getVisibleTiles(newX, newY);
-  const loadedTilesSet = new Set(state.tilesLoaded || []);
-  visibleTiles.forEach(tile => {
-    loadedTilesSet.add(getTileKey(tile.x, tile.y));
-  });
-  const updatedLoaded = Array.from(loadedTilesSet);
+  // Load all visible tiles from new position (this generates them if needed)
+  getVisibleTiles(newX, newY);
   
   // Mark current tile as visited
   const tileKey = getTileKey(newX, newY);
@@ -160,12 +149,15 @@ function handleWest(state: GameState): CommandResult {
   const tile = getTileAt(newX, newY);
   const locationInfo = tile.description + (tile.buildingName ? `\n\nBuilding: ${tile.buildingName}` : '');
   
+  // Save all tiles from registry (includes newly generated ones)
+  const savedTiles = getAllTiles();
+  
   return {
     success: true,
     message: 'You move west.\n\n' + locationInfo,
     stateUpdate: {
       playerPosition: newPosition,
-      tilesLoaded: updatedLoaded,
+      savedTiles,
       visitedTiles: updatedVisited,
     },
   };

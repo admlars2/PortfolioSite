@@ -1,0 +1,77 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - backend-network
+
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: ollama-init
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Ollama API to be ready..."
+        for i in $(seq 1 30); do
+          if curl -sf http://ollama:11434/api/tags > /dev/null 2>&1; then
+            echo "Ollama API is ready"
+            break
+          fi
+          echo "Waiting for Ollama API... ($((i*2))s)"
+          sleep 2
+        done
+        
+        echo "Checking if model phi3:latest exists..."
+        if curl -sf http://ollama:11434/api/tags | grep -q "phi3:latest"; then
+          echo "Model phi3:latest already exists"
+          exit 0
+        fi
+        
+        echo "Triggering pull of model phi3:latest..."
+        echo "Note: This may take several minutes. The model will be available once the pull completes."
+        curl -X POST http://ollama:11434/api/pull \
+          -H "Content-Type: application/json" \
+          -d '{"name": "phi3:latest"}' \
+          --no-buffer || echo "Pull initiated (check logs for progress)"
+        echo "Init complete"
+    depends_on:
+      ollama:
+        condition: service_started
+    networks:
+      - backend-network
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_URL=http://ollama:11434/api/chat
+      - OLLAMA_MODEL=phi3:latest
+      - OLLAMA_TIMEOUT=120.0
+    depends_on:
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend-network
+
+volumes:
+  ollama_data:
+
+networks:
+  backend-network:
+    driver: bridge
+
