@@ -13,6 +13,8 @@ services:
     image: curlimages/curl:latest
     container_name: ollama-init
     entrypoint: ["/bin/sh", "-c"]
+    environment:
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma3:4b}
     command:
       - |
         echo "Waiting for Ollama API to be ready..."
@@ -24,20 +26,33 @@ services:
           echo "Waiting for Ollama API... ($((i*2))s)"
           sleep 2
         done
-        
-        echo "Checking if model phi3:latest exists..."
-        if curl -sf http://ollama:11434/api/tags | grep -q "phi3:latest"; then
-          echo "Model phi3:latest already exists"
+
+        echo "Checking if model $$OLLAMA_MODEL exists..."
+        if curl -sf http://ollama:11434/api/tags | grep -qF "$$OLLAMA_MODEL"; then
+          echo "Model $$OLLAMA_MODEL already exists"
           exit 0
         fi
-        
-        echo "Triggering pull of model phi3:latest..."
+
+        echo "Triggering pull of model $$OLLAMA_MODEL..."
         echo "Note: This may take several minutes. The model will be available once the pull completes."
-        curl -X POST http://ollama:11434/api/pull \
+        # Escape JSON special characters in model name (backslash and double quote)
+        escaped_model=$(printf '%s\n' "$$OLLAMA_MODEL" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        payload=$(printf '{"name":"%s"}' "$$escaped_model")
+        if ! curl -X POST http://ollama:11434/api/pull \
           -H "Content-Type: application/json" \
-          -d '{"name": "phi3:latest"}' \
-          --no-buffer || echo "Pull initiated (check logs for progress)"
-        echo "Init complete"
+          -d "$$payload" \
+          --no-buffer; then
+          echo "ERROR: Failed to pull model $$OLLAMA_MODEL"
+          exit 1
+        fi
+        
+        echo "Verifying model $$OLLAMA_MODEL was pulled successfully..."
+        if ! curl -sf http://ollama:11434/api/tags | grep -qF "$$OLLAMA_MODEL"; then
+          echo "ERROR: Model $$OLLAMA_MODEL was not found after pull attempt"
+          exit 1
+        fi
+        
+        echo "Init complete - model $$OLLAMA_MODEL is ready"
     depends_on:
       ollama:
         condition: service_started
@@ -53,12 +68,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - OLLAMA_URL=http://ollama:11434/api/chat
-      - OLLAMA_MODEL=phi3:latest
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma3:4b}
       - OLLAMA_TIMEOUT=120.0
     depends_on:
       ollama:
         condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 60s

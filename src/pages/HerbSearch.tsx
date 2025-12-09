@@ -3,6 +3,7 @@ import { useKeyboardSounds } from '@/hooks/useKeyboardSounds';
 import { createGameState, saveGameState, type GameState } from '@/game/gameState';
 import { executeCommand } from '@/game/commandHandler';
 import { initializeMap, initializeMapNoise, loadTilesFromState } from '@/game/map';
+import { initializeQuests } from '@/game/quests';
 
 interface OutputLine {
   type: 'command' | 'output' | 'error';
@@ -14,6 +15,9 @@ export default function HerbSearch() {
   const [input, setInput] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [gameState, setGameState] = useState<GameState>(() => {
+    // Initialize quests first
+    initializeQuests();
+    
     const state = createGameState();
     // Initialize map seed if not present
     if (!state.mapSeed) {
@@ -31,6 +35,8 @@ export default function HerbSearch() {
   });
   const [outputHistory, setOutputHistory] = useState<OutputLine[]>([]);
   const [isWaitingForName, setIsWaitingForName] = useState(!gameState.playerName);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentTalkPerson, setCurrentTalkPerson] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -66,6 +72,16 @@ export default function HerbSearch() {
     }
   }, [outputHistory]);
 
+  // Refocus input when loading completes
+  useEffect(() => {
+    if (!isLoading && !isWaitingForName && inputRef.current) {
+      // Small delay to ensure input is enabled
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    }
+  }, [isLoading, isWaitingForName]);
+
   // Update cursor position
   useEffect(() => {
     if (inputRef.current && measureRef.current && cursorRef.current && isFocused) {
@@ -77,8 +93,20 @@ export default function HerbSearch() {
       measureRef.current.textContent = textBeforeCursor;
       const textWidth = measureRef.current.offsetWidth;
       
-      // Update cursor position (pl-36 = 9rem = 144px is the input padding-left)
-      let cursorPosition = 9 * 16 + textWidth;
+      // Get scroll position to account for horizontal scrolling
+      const scrollLeft = input.scrollLeft || 0;
+      const paddingLeft = 9 * 16; // pl-36 = 9rem = 144px
+      const inputWidth = input.offsetWidth;
+      
+      // Calculate cursor position relative to visible area
+      // Account for scroll offset so cursor moves with text
+      let cursorPosition = paddingLeft + textWidth - scrollLeft;
+      
+      // Clamp cursor to visible area (keep it within input bounds)
+      const minPosition = paddingLeft;
+      const maxPosition = paddingLeft + inputWidth - paddingLeft - 6; // Account for padding-right
+      cursorPosition = Math.max(minPosition, Math.min(maxPosition, cursorPosition));
+      
       cursorRef.current.style.left = `${cursorPosition}px`;
     }
   }, [input, isFocused]);
@@ -90,11 +118,26 @@ export default function HerbSearch() {
   const handleSelectionChange = () => {
     // Trigger cursor position update
     if (inputRef.current && measureRef.current && cursorRef.current && isFocused) {
-      const position = inputRef.current.selectionStart || 0;
-      const textBeforeCursor = inputRef.current.value.substring(0, position);
+      const input = inputRef.current;
+      const position = input.selectionStart || 0;
+      const textBeforeCursor = input.value.substring(0, position);
       measureRef.current.textContent = textBeforeCursor;
       const textWidth = measureRef.current.offsetWidth;
-      cursorRef.current.style.left = `${9 * 16 + textWidth}px`;
+      
+      // Get scroll position to account for horizontal scrolling
+      const scrollLeft = input.scrollLeft || 0;
+      const paddingLeft = 9 * 16; // pl-36 = 9rem = 144px
+      const inputWidth = input.offsetWidth;
+      
+      // Calculate cursor position relative to visible area
+      let cursorPosition = paddingLeft + textWidth - scrollLeft;
+      
+      // Clamp cursor to visible area
+      const minPosition = paddingLeft;
+      const maxPosition = paddingLeft + inputWidth - paddingLeft - 6;
+      cursorPosition = Math.max(minPosition, Math.min(maxPosition, cursorPosition));
+      
+      cursorRef.current.style.left = `${cursorPosition}px`;
     }
   };
 
@@ -150,7 +193,7 @@ export default function HerbSearch() {
         `You are inside grandma's house.\n\n` +
         `Grandma has called you downstairs. The warm aroma of herbs fills the air.\n\n` +
         `Type "help" to see all available commands.\n` +
-        `Try typing "talk grandma" to start your adventure!`;
+        `Try typing "talk grandma", then asking about tasks!`;
       addOutput('output', openingMessage);
       
       // Clear input
@@ -163,12 +206,32 @@ export default function HerbSearch() {
       return;
     }
 
-    // Add command to output
-    addOutput('command', `> ${commandInput}`);
+    // Parse command to check if it's a talk command
+    const commandParts = commandInput.trim().toLowerCase().split(/\s+/);
+    const isTalkCommand = commandParts[0] === 'talk' || commandParts[0] === 't';
+    const talkPerson = isTalkCommand && commandParts.length > 1 ? commandParts[1] : null;
+    const talkMessage = isTalkCommand ? commandParts.slice(2).join(' ') : null;
+
+    // Add command to output - show "You: [message]" for talk commands with message
+    if (isTalkCommand && talkMessage) {
+      addOutput('command', `You: ${talkMessage}`);
+    } else {
+      addOutput('command', `> ${commandInput}`);
+    }
+
+    // Set loading state for async commands (like talk)
+    if (isTalkCommand && talkPerson) {
+      setIsLoading(true);
+      setCurrentTalkPerson(talkPerson);
+    }
 
     // Execute command
     try {
       const result = await executeCommand(commandInput, gameState);
+      
+      // Clear loading state
+      setIsLoading(false);
+      setCurrentTalkPerson(null);
       
       // Add result to output
       addOutput(result.success ? 'output' : 'error', result.message);
@@ -194,16 +257,23 @@ export default function HerbSearch() {
         });
       }
     } catch (error) {
-      addOutput('error', `Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsLoading(false);
+      setCurrentTalkPerson(null);
+      
+      // Suppress browser extension message channel errors (harmless)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('message channel closed') || errorMessage.includes('asynchronous response')) {
+        // This is a browser extension error, ignore it
+        return;
+      }
+      
+      addOutput('error', `Error executing command: ${errorMessage}`);
     }
 
     // Clear input
     setInput('');
     
-    // Refocus input
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
+    // Refocus will be handled by useEffect when loading completes
   };
 
   return (
@@ -255,8 +325,10 @@ export default function HerbSearch() {
                 onKeyUp={handleSelectionChange}
                 onKeyDown={handleKeyDown}
                 onClick={handleSelectionChange}
+                onScroll={handleSelectionChange}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
+                disabled={isLoading}
                 className="w-full pl-36 pr-6 py-4 bg-card border-2 border-default rounded-lg 
                          text-primary font-mono text-lg
                          focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
@@ -264,8 +336,9 @@ export default function HerbSearch() {
                          placeholder:text-secondary/50
                          shadow-sm hover:shadow-md focus:shadow-lg
                          caret-transparent
-                         placeholder:ml-[2px]"
-                placeholder={isWaitingForName ? "Enter your name..." : "Enter command..."}
+                         placeholder:ml-[2px]
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder={isLoading ? "Waiting for response..." : (isWaitingForName ? "Enter your name..." : "Enter command...")}
                 autoComplete="off"
                 spellCheck="false"
               />
@@ -316,6 +389,16 @@ export default function HerbSearch() {
                     {line.content}
                   </div>
                 ))}
+                {/* Loading indicator */}
+                {isLoading && currentTalkPerson && (
+                  <div className="text-secondary">
+                    <span className="wave-text">
+                      <span>.</span>
+                      <span>.</span>
+                      <span>.</span>
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>

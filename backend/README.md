@@ -54,7 +54,7 @@ poetry run uvicorn main:app --host 0.0.0.0 --port 8000
 
 Environment variables:
 
-- `OLLAMA_URL`: Ollama API endpoint (default: `http://ollama:11434/api/chat`)
+- `OLLAMA_URL`: Ollama base URL (default: `http://ollama:11434`)
 - `OLLAMA_MODEL`: Model to use (default: `phi3:latest`)
 - `OLLAMA_TIMEOUT`: Request timeout in seconds (default: `30.0`)
 - `SYSTEM_PROMPT`: Default system prompt (default: `You are a helpful assistant.`)

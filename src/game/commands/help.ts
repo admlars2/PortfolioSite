@@ -22,6 +22,8 @@ People:
 Player:
   stats, status - View your stats
   inventory, inv, i - View your inventory
+  quests, quest, q - View your active quests
+  forage, f - Forage for herbs in your current location
 
 System:
   help, h, ?   - Show this help message

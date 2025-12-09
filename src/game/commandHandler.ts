@@ -11,6 +11,9 @@ import { handleLook } from './commands/look';
 import { handleSeed } from './commands/seed';
 import { handleClear, resetClearConfirmations } from './commands/clear';
 import { handleTalk } from './commands/talk';
+import { handleQuests } from './commands/quests';
+import { handleForage } from './commands/forage';
+import { handleQuestAcceptance } from './commands/questAcceptance';
 
 export interface CommandResult {
   success: boolean;
@@ -74,6 +77,15 @@ const commandHandlers: Record<string, CommandHandler> = {
   inv: handleInventory,
   i: handleInventory,
   
+  // Quests command
+  quests: handleQuests,
+  quest: handleQuests,
+  q: handleQuests,
+  
+  // Forage command
+  forage: handleForage,
+  f: handleForage,
+  
   // Debug commands
   seed: handleSeed,
   
@@ -111,6 +123,14 @@ export function executeCommand(
   // Reset clear confirmations if any other command is executed
   if (command !== 'clear' && command !== 'clearsave') {
     resetClearConfirmations();
+  }
+  
+  // Handle quest acceptance separately BEFORE normal command processing
+  // Standalone "yes" should accept quest but NOT send to NPC
+  const questResult = handleQuestAcceptance(command, state);
+  if (questResult !== null) {
+    // Quest acceptance handled - return result without sending to NPC
+    return questResult;
   }
   
   const handler = commandHandlers[command];

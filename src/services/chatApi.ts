@@ -19,6 +19,8 @@ export async function sendChatMessage(
   message: string,
   systemPrompt: string
 ): Promise<string> {
+  console.log('Sending chat message:', message);
+  console.log('System prompt:', systemPrompt);
   const response = await fetch(`${CHAT_API_URL}/api/chat`, {
     method: 'POST',
     headers: {
@@ -36,6 +38,7 @@ export async function sendChatMessage(
   }
 
   const data: ChatResponse = await response.json();
+  console.log('Response:', data.message);
   return data.message;
 }
 

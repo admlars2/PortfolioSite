@@ -1,6 +1,6 @@
 import { createNoise2D } from 'simplex-noise';
 import seedrandom from 'seedrandom';
-import { getPeople, type Person } from './person';
+import { getCharacters, type Character } from './person';
 
 // Tile system - consolidated
 
@@ -9,15 +9,19 @@ export interface TileAction {
   description: string;
 }
 
+export type BiomeType = 'plains' | 'forest' | 'mountain';
+
 export interface TileData {
   x: number;
   y: number;
   description: string;
-  display: string; // Character to display on map (e.g., '.', 'B', 'H')
+  display: string; // Character to display on map (e.g., '.', 'B', 'H', 'M')
   buildingName?: string; // Name of building/room on this tile
   buildingDescription?: string; // Description of the building
   actions: TileAction[]; // Available actions/commands on this tile
   priority: number; // Priority for zoomed-out map display (higher = more important)
+  biome?: BiomeType; // Biome type of this tile
+  assignedHerb?: string; // Herb ID assigned to this tile (if foraged)
 }
 
 // Tile registry - maps coordinates to tile data
@@ -90,16 +94,30 @@ export function getTileAt(x: number, y: number): TileData {
   const noise = getNoiseFunction();
   const noiseValue = noise(x * 0.1, y * 0.1); // Scale coordinates for better noise patterns
   
-  // Use noise to determine terrain type (forest if noise > 0, plains otherwise)
-  const isForest = noiseValue > 0;
+  // Calculate distance from center (0,0) for mountain placement
+  const distanceFromCenter = Math.sqrt(x * x + y * y);
   
-  const newTile: TileData = isForest ? {
+  // Mountains appear far from center (distance > 5) and with high noise value
+  const isMountain = distanceFromCenter > 5 && noiseValue > 0.3;
+  // Forest if noise > 0 and not mountain
+  const isForest = !isMountain && noiseValue > 0;
+  
+  const newTile: TileData = isMountain ? {
+    x,
+    y,
+    description: "Rugged mountain terrain with rocky outcrops and sparse vegetation.",
+    display: 'M', // Mountain marker
+    actions: [],
+    priority: 2, // Mountains have highest priority
+    biome: 'mountain',
+  } : isForest ? {
     x,
     y,
     description: "A dense forest with tall trees and dappled sunlight filtering through the canopy.",
     display: 'F', // Forest marker
     actions: [],
     priority: 1, // Forest has slightly higher priority than plains
+    biome: 'forest',
   } : {
     x,
     y,
@@ -107,6 +125,7 @@ export function getTileAt(x: number, y: number): TileData {
     display: '.',
     actions: [],
     priority: 0, // Plains have lowest priority
+    biome: 'plains',
   };
   
   registerTile(newTile);
@@ -186,8 +205,8 @@ export const locationData: Record<string, LocationData> = {
   // },
 };
 
-// Get people in a specific location
-export function getPeopleInLocation(locationName: string | null, isInside: boolean): Person[] {
+// Get characters in a specific location
+export function getPeopleInLocation(locationName: string | null, isInside: boolean): Character[] {
   if (!isInside || !locationName) {
     // When outside, return empty array for now
     // Later we can add nearby people based on player position
@@ -199,34 +218,34 @@ export function getPeopleInLocation(locationName: string | null, isInside: boole
     return [];
   }
   
-  return getPeople(location.peopleIds);
+  return getCharacters(location.peopleIds);
 }
 
-// Get all people nearby (in current location + companions)
+// Get all characters nearby (in current location + companions)
 export function getNearbyPeople(
   locationName: string | null, 
   isInside: boolean, 
   companionIds: string[]
-): Person[] {
+): Character[] {
   const locationPeople = getPeopleInLocation(locationName, isInside);
   
   // Add companions to the list if they're with you
-  const companions = getPeople(companionIds);
+  const companions = getCharacters(companionIds);
   
-  // Combine location people and companions, avoiding duplicates
-  const allPeople = new Map<string, Person>();
+  // Combine location characters and companions, avoiding duplicates
+  const allCharacters = new Map<string, Character>();
   
-  // Add location people
-  locationPeople.forEach(person => {
-    allPeople.set(person.id.toLowerCase(), person);
+  // Add location characters
+  locationPeople.forEach((character: Character) => {
+    allCharacters.set(character.id.toLowerCase(), character);
   });
   
-  // Add companions (they override location people if same person)
-  companions.forEach(person => {
-    allPeople.set(person.id.toLowerCase(), person);
+  // Add companions (they override location characters if same character)
+  companions.forEach((character: Character) => {
+    allCharacters.set(character.id.toLowerCase(), character);
   });
   
-  return Array.from(allPeople.values());
+  return Array.from(allCharacters.values());
 }
 
 // Check if a person is in a specific location

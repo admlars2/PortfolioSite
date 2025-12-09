@@ -11,14 +11,16 @@ if (import.meta.env.DEV) {
       event.message?.includes('Invalid argument not valid semver') ||
       event.message?.includes('validateAndParse') ||
       event.filename?.includes('agent.js') ||
-      event.filename?.includes('index.js')
+      event.filename?.includes('index.js') ||
+      event.message?.includes('message channel closed') ||
+      event.message?.includes('asynchronous response')
     ) {
       event.preventDefault();
       event.stopPropagation();
       return false;
     }
   }, true);
-
+  
   // Suppress console errors from React DevTools
   const originalError = console.error;
   console.error = (...args: unknown[]) => {
@@ -49,6 +51,21 @@ if (import.meta.env.DEV) {
     originalWarn.apply(console, args);
   };
 }
+
+// Suppress browser extension message channel errors (harmless) - always active
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason;
+  const errorMessage = reason?.message || (typeof reason === 'string' ? reason : String(reason || ''));
+  
+  if (
+    errorMessage.includes('message channel closed') ||
+    errorMessage.includes('asynchronous response') ||
+    errorMessage.includes('A listener indicated an asynchronous response')
+  ) {
+    event.preventDefault();
+    return;
+  }
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

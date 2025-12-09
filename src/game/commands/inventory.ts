@@ -13,9 +13,10 @@ export const handleInventory: CommandHandler = (_args, state: GameState) => {
   } else {
     message += '\n';
     items.forEach(item => {
-      const quantity = item.quantity > 1 ? ` x${item.quantity}` : '';
+      const cappedQuantity = Math.min(item.quantity, 99);
+      const quantity = `${cappedQuantity}x `;
       const desc = item.description ? ` - ${item.description}` : '';
-      message += `  • ${item.name}${quantity}${desc}\n`;
+      message += `  • ${quantity}${item.name}${desc}\n`;
     });
     message += `\nTotal items: ${inventory.getTotalItems()}\n`;
   }
