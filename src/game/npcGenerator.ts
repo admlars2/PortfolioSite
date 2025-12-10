@@ -2,6 +2,7 @@ import seedrandom from 'seedrandom';
 import type { BiomeType, TileData } from './map';
 import { Character, type PersonalityTraits, getCharacter, registerCharacter } from './person';
 import { getAllItems } from './item';
+import { ensureItemMetadata, type ShopState, type ShopStockItem } from './shop';
 
 type NPCArchetype = 'companion' | 'shopkeeper' | 'traveler';
 
@@ -83,6 +84,40 @@ function buildInventory(archetype: NPCArchetype, biome: BiomeType | undefined, r
   return inventory;
 }
 
+function buildShopStock(biome: BiomeType | undefined, rng: seedrandom.PRNG): ShopState {
+  const allItems = getAllItems();
+  const biomeFiltered = biome
+    ? allItems.filter(item => item.id.includes(biome) || item.description.toLowerCase().includes(biome))
+    : [];
+  const pool = biomeFiltered.length > 0 ? biomeFiltered : allItems;
+
+  const itemCount = 3 + Math.floor(rng() * 2); // 3-4 items
+  const items: ShopStockItem[] = [];
+
+  for (let i = 0; i < itemCount && pool.length > 0; i++) {
+    const picked = pick(pool, rng);
+    const basePrice = 8 + Math.floor(rng() * 10); // 8-17 gold
+    const quantity = 1 + Math.floor(rng() * 3); // 1-3
+    const meta = ensureItemMetadata(picked.id);
+
+    const existing = items.find(it => it.itemId === picked.id);
+    if (existing) {
+      existing.quantity += quantity;
+      existing.price = Math.round((existing.price + basePrice) / 2);
+    } else {
+      items.push({
+        itemId: picked.id,
+        name: meta.name,
+        description: meta.description,
+        price: basePrice,
+        quantity,
+      });
+    }
+  }
+
+  return { items };
+}
+
 function buildName(archetype: NPCArchetype, rng: seedrandom.PRNG): string {
   const first = pick(FIRST_NAMES, rng);
   if (archetype === 'companion') {
@@ -125,14 +160,15 @@ function buildBiography(archetype: NPCArchetype, biome: BiomeType | undefined): 
   };
 }
 
-function createCharacterForTile(tile: TileData, rng: seedrandom.PRNG, index: number): Character {
+function createCharacterForTile(tile: TileData, rng: seedrandom.PRNG, index: number, tileShopState: Record<string, ShopState>): Character {
   const archetype = pickWeighted(buildArchetypeWeights(tile.biome), rng);
   const name = buildName(archetype, rng);
   const tileKey = sanitizeTileKey(tile);
   const id = `npc_${archetype}_${tileKey}_${index}`;
   const personality = buildPersonality(rng);
   const { description, biography, job } = buildBiography(archetype, tile.biome);
-  const inventory = buildInventory(archetype, tile.biome, rng);
+  const inventory = archetype === 'shopkeeper' ? {} : buildInventory(archetype, tile.biome, rng);
+  const canBeCompanion = archetype !== 'shopkeeper'; // Travelers and companions can join; shopkeepers stay put
 
   let skills: Record<string, number>;
   if (archetype === 'shopkeeper') {
@@ -143,13 +179,13 @@ function createCharacterForTile(tile: TileData, rng: seedrandom.PRNG, index: num
     skills = { lore: 8, cartography: 6 };
   }
 
-  return new Character(
+  const character = new Character(
     id,
     name,
     description,
     personality,
     {
-      canBeCompanion: archetype === 'companion',
+      canBeCompanion,
       biography,
       job,
       skills,
@@ -158,6 +194,20 @@ function createCharacterForTile(tile: TileData, rng: seedrandom.PRNG, index: num
       inventory,
     }
   );
+
+  // Initialize shop stock if this is a shopkeeper
+  if (archetype === 'shopkeeper') {
+    if (!tileShopState[id]) {
+      tileShopState[id] = buildShopStock(tile.biome, rng);
+    }
+    // Mark tile as shop for map display if no building marker overrides it
+    if (!tile.buildingName) {
+      tile.display = 'S';
+      tile.priority = Math.max(tile.priority, 3);
+    }
+  }
+
+  return character;
 }
 
 /**
@@ -167,6 +217,7 @@ export function generateNPCsForTile(tile: TileData, mapSeed?: string): Character
   const baseSeed = mapSeed || 'default-map-seed';
   const seed = `${baseSeed}|${tile.x},${tile.y}|npc`;
   const rng = createRng(seed);
+  const tileShopState = tile.shopState || {};
 
   const biomeKey: BiomeType | 'default' = tile.biome ?? 'default';
   const spawnChance = SPAWN_CHANCE_BY_BIOME[biomeKey] ?? SPAWN_CHANCE_BY_BIOME.default;
@@ -178,10 +229,11 @@ export function generateNPCsForTile(tile: TileData, mapSeed?: string): Character
   const characters: Character[] = [];
 
   for (let i = 0; i < npcCount; i++) {
-    const character = createCharacterForTile(tile, rng, i);
+    const character = createCharacterForTile(tile, rng, i, tileShopState);
     characters.push(character);
   }
 
+  tile.shopState = tileShopState;
   return characters;
 }
 
@@ -190,6 +242,9 @@ export function generateNPCsForTile(tile: TileData, mapSeed?: string): Character
  * keep encounters consistent after saving/loading.
  */
 export function ensureTileNPCs(tile: TileData, mapSeed?: string): Character[] {
+  if (!tile.shopState) {
+    tile.shopState = {};
+  }
   // If we've already generated IDs for this tile, reuse them
   if (tile.npcIds) {
     const npcs: Character[] = [];
@@ -207,12 +262,24 @@ export function ensureTileNPCs(tile: TileData, mapSeed?: string): Character[] {
         npcs.push(character);
       }
     }
+    // Refresh map marker if any shopkeepers are present on this tile
+    const hasShopkeeper = npcs.some(c => tile.shopState && tile.shopState[c.id]);
+    if (hasShopkeeper && !tile.buildingName) {
+      tile.display = 'S';
+      tile.priority = Math.max(tile.priority, 3);
+    }
     return npcs;
   }
 
   const generated = generateNPCsForTile(tile, mapSeed);
   const npcIds = generated.map(c => c.id);
   tile.npcIds = npcIds;
+
+  const hasShopkeeper = generated.some(c => tile.shopState && tile.shopState[c.id]);
+  if (hasShopkeeper && !tile.buildingName) {
+    tile.display = 'S';
+    tile.priority = Math.max(tile.priority, 3);
+  }
 
   generated.forEach(registerCharacter);
   return generated;

@@ -14,6 +14,7 @@ import { handleTalk } from './commands/talk';
 import { handleQuests } from './commands/quests';
 import { handleForage } from './commands/forage';
 import { handleQuestAcceptance } from './commands/questAcceptance';
+import { handleShop } from './commands/shop';
 
 export interface CommandResult {
   success: boolean;
@@ -81,6 +82,10 @@ const commandHandlers: Record<string, CommandHandler> = {
   quests: handleQuests,
   quest: handleQuests,
   q: handleQuests,
+
+  // Shop command
+  shop: handleShop,
+  trade: handleShop,
   
   // Forage command
   forage: handleForage,

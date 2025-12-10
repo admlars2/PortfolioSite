@@ -236,7 +236,17 @@ async def chat(request: ChatRequest):
                 )
             
             data = response.json()
-            message_content = data.get("message", {}).get("content", "") or data.get("response", "")
+
+            message_field = data.get("message")
+            message_content = ""
+
+            if isinstance(message_field, dict):
+                message_content = message_field.get("content", "") or message_field.get("message", "")
+            elif isinstance(message_field, str):
+                message_content = message_field
+
+            if not message_content:
+                message_content = data.get("response", "") or data.get("content", "")
             
             if not message_content:
                 logger.error("Empty message content received from Ollama")

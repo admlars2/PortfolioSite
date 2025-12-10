@@ -4,7 +4,8 @@ import type { GameState } from '../gameState';
 export const handleInventory: CommandHandler = (_args, state: GameState) => {
   const inventory = state.inventory;
   
-  let message = 'Inventory:\n';
+  let message = `Gold: ${state.gold ?? 0}\n`;
+  message += 'Inventory:\n';
   message += '═'.repeat(50) + '\n';
   
   const items = inventory.getAllItems();

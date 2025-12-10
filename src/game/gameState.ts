@@ -20,6 +20,7 @@ export interface GameState {
   isInside: boolean;
   currentLocation: string | null;
   companions: string[]; // Array of person IDs
+  gold: number;
   playerStats: PlayerStats;
   inventory: Inventory;
   savedTiles: { [tileKey: string]: TileData }; // Actual tile data saved by tile key
@@ -38,6 +39,7 @@ export const initialGameState: GameState = {
   isInside: true,
   currentLocation: "grandma's house",
   companions: [],
+  gold: 100,
   playerStats: { ...defaultPlayerStats },
   inventory: new Inventory(),
   savedTiles: {}, // Start with empty tiles - will be populated as tiles are generated
@@ -63,6 +65,7 @@ export function createGameState(): GameState {
         companions: parsed.companions || (parsed.companion ? [parsed.companion] : []),
         // Handle player stats migration
         playerStats: parsed.playerStats || { ...defaultPlayerStats },
+      gold: parsed.gold !== undefined ? parsed.gold : 100,
         // Handle inventory migration
         inventory: parsed.inventory 
           ? Inventory.fromJSON(parsed.inventory) 

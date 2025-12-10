@@ -18,6 +18,7 @@ Location:
 People:
   people, p    - List people nearby or in your current location
   talk, t [person] [message] - Talk to a person nearby
+  shop [person] [buy|offer] [item] [qty] [price] - Trade with a nearby shopkeeper
 
 Player:
   stats, status - View your stats

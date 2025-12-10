@@ -2,6 +2,7 @@ import { createNoise2D } from 'simplex-noise';
 import seedrandom from 'seedrandom';
 import { getCharacters, type Character } from './person';
 import { ensureTileNPCs } from './npcGenerator';
+import type { ShopState } from './shop';
 
 // Tile system - consolidated
 
@@ -24,6 +25,7 @@ export interface TileData {
   biome?: BiomeType; // Biome type of this tile
   assignedHerb?: string; // Herb ID assigned to this tile (if foraged)
   npcIds?: string[]; // Generated NPC ids tied to this tile (outside encounters)
+  shopState?: Record<string, ShopState>; // Persistent shop stock per NPC on this tile
 }
 
 // Tile registry - maps coordinates to tile data
