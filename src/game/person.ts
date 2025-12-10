@@ -1,4 +1,4 @@
-import { getItemName, getItem, getAllHerbs } from './item';
+import { getItemName, getItem, getAllHerbs, getAllItems } from './item';
 import type { Inventory } from './player';
 import { sendChatMessage } from '@/services/chatApi';
 import { getQuest, QuestStatus, type Quest } from './quests';
@@ -865,8 +865,10 @@ const TOOL_REGISTRY: ToolDefinition[] = [
         }).join('\n');
         researchResult = `Available herbs:\n${herbInfo}`;
       } else if (topic.toLowerCase().includes('item')) {
-        const items = getAllHerbs(); // For now, just herbs
-        researchResult = `Items in the world: ${items.map(i => i.name).join(', ')}`;
+        const items = getAllItems();
+        researchResult = items.length > 0
+          ? `Items in the world: ${items.map(i => i.name).join(', ')}`
+          : 'No items are currently registered in the world.';
       } else {
         researchResult = `Research topic "${topic}" - information not available.`;
       }
@@ -1147,6 +1149,11 @@ export const characterRegistry: Record<string, Character> = {
     }
   ),
 };
+
+// Register a character in the central registry (used for generated NPCs)
+export function registerCharacter(character: Character): void {
+  characterRegistry[character.id.toLowerCase()] = character;
+}
 
 // Get a character by ID
 export function getCharacter(id: string): Character | undefined {

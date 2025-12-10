@@ -15,11 +15,25 @@ export const handleTalk: CommandHandler = async (args, state) => {
     };
   }
 
-  const personId = args[0].toLowerCase();
+  const requestedName = args[0].toLowerCase();
   const message = args.slice(1).join(' ').trim();
 
-  // Check if character exists
-  const character = getCharacter(personId);
+  // Find a matching character by id or display name among nearby people
+  const nearbyPeople = getNearbyPeople(
+    state.currentLocation,
+    state.isInside,
+    state.companions,
+    state.playerPosition,
+    state.mapSeed
+  );
+  let character = nearbyPeople.find(p => p.id.toLowerCase() === requestedName);
+  if (!character) {
+    character = nearbyPeople.find(p => p.name.toLowerCase().startsWith(requestedName));
+  }
+  if (!character) {
+    character = getCharacter(requestedName);
+  }
+
   if (!character) {
     return {
       success: false,
@@ -27,8 +41,7 @@ export const handleTalk: CommandHandler = async (args, state) => {
     };
   }
 
-  // Check if character is nearby
-  const nearbyPeople = getNearbyPeople(state.currentLocation, state.isInside, state.companions);
+  const personId = character.id.toLowerCase();
   const isNearby = nearbyPeople.some(p => p.id.toLowerCase() === personId);
   
   if (!isNearby) {

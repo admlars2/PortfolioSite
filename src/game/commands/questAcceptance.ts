@@ -10,7 +10,13 @@ function findQuestOffer(state: GameState): { characterId: string; quest: Quest }
     return null;
   }
 
-  const nearbyPeople = getNearbyPeople(state.currentLocation, state.isInside, state.companions || []);
+  const nearbyPeople = getNearbyPeople(
+    state.currentLocation,
+    state.isInside,
+    state.companions || [],
+    state.playerPosition,
+    state.mapSeed
+  );
   
   for (const person of nearbyPeople) {
     const personId = person.id.toLowerCase();
@@ -149,7 +155,13 @@ export function checkQuestAcceptance(
   }
   
   // Check if this character has available quests
-  const nearbyPeople = getNearbyPeople(state.currentLocation, state.isInside, state.companions || []);
+  const nearbyPeople = getNearbyPeople(
+    state.currentLocation,
+    state.isInside,
+    state.companions || [],
+    state.playerPosition,
+    state.mapSeed
+  );
   const person = nearbyPeople.find(p => p.id.toLowerCase() === characterId);
   
   if (!person || !person.questIds) {

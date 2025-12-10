@@ -1,6 +1,7 @@
 import { createNoise2D } from 'simplex-noise';
 import seedrandom from 'seedrandom';
 import { getCharacters, type Character } from './person';
+import { ensureTileNPCs } from './npcGenerator';
 
 // Tile system - consolidated
 
@@ -22,6 +23,7 @@ export interface TileData {
   priority: number; // Priority for zoomed-out map display (higher = more important)
   biome?: BiomeType; // Biome type of this tile
   assignedHerb?: string; // Herb ID assigned to this tile (if foraged)
+  npcIds?: string[]; // Generated NPC ids tied to this tile (outside encounters)
 }
 
 // Tile registry - maps coordinates to tile data
@@ -165,6 +167,12 @@ export function getBuildingOnTile(x: number, y: number): string | undefined {
   return tile?.buildingName;
 }
 
+// Get NPCs that belong to the current tile (for outdoor encounters)
+export function getNPCsOnTile(x: number, y: number, mapSeed?: string): Character[] {
+  const tile = getTileAt(x, y);
+  return ensureTileNPCs(tile, mapSeed);
+}
+
 // Initialize default tiles
 export function initializeTiles(): void {
   // Starting location - grandma's house at (0, 0)
@@ -225,7 +233,9 @@ export function getPeopleInLocation(locationName: string | null, isInside: boole
 export function getNearbyPeople(
   locationName: string | null, 
   isInside: boolean, 
-  companionIds: string[]
+  companionIds: string[],
+  playerPosition?: { x: number; y: number },
+  mapSeed?: string
 ): Character[] {
   const locationPeople = getPeopleInLocation(locationName, isInside);
   
@@ -244,6 +254,14 @@ export function getNearbyPeople(
   companions.forEach((character: Character) => {
     allCharacters.set(character.id.toLowerCase(), character);
   });
+
+  // Add outdoor NPCs tied to the tile the player is standing on
+  if (!isInside && playerPosition) {
+    const roamingNPCs = getNPCsOnTile(playerPosition.x, playerPosition.y, mapSeed);
+    roamingNPCs.forEach((character: Character) => {
+      allCharacters.set(character.id.toLowerCase(), character);
+    });
+  }
   
   return Array.from(allCharacters.values());
 }
@@ -309,6 +327,8 @@ export function renderMap(
   loadedTiles: string[],
   zoomLevel: number = 1
 ): string {
+  // Convert loaded tiles to a set to avoid repeated O(n) lookups while rendering
+  const loadedTileSet = new Set(loadedTiles);
   const loadRadius = 3; // Radius for loading/generating new tiles (Manhattan distance)
   
   const output: string[] = [];
@@ -337,7 +357,7 @@ export function renderMap(
       const worldX = playerX + relX;
       const manhattanDistance = Math.abs(relX) + Math.abs(relY);
       const key = getTileKey(worldX, worldY);
-      const isLoaded = loadedTiles.includes(key);
+        const isLoaded = loadedTileSet.has(key);
       const tileExistsInRegistry = tileExists(worldX, worldY);
       const isWithinLoadRadius = manhattanDistance <= loadRadius;
       

@@ -2,7 +2,13 @@ import type { CommandHandler } from '../commandHandler';
 import { getNearbyPeople } from '../map';
 
 export const handlePeople: CommandHandler = (_args, state) => {
-  const people = getNearbyPeople(state.currentLocation, state.isInside, state.companions);
+  const people = getNearbyPeople(
+    state.currentLocation,
+    state.isInside,
+    state.companions,
+    state.playerPosition,
+    state.mapSeed
+  );
   
   if (people.length === 0) {
     const locationContext = state.isInside 

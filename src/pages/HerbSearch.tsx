@@ -11,6 +11,8 @@ interface OutputLine {
   timestamp: number;
 }
 
+const OUTPUT_HISTORY_LIMIT = 200;
+
 export default function HerbSearch() {
   const [input, setInput] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -41,6 +43,7 @@ export default function HerbSearch() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<number | null>(null);
   const { playSound } = useKeyboardSounds(gameState.audioEnabled, gameState.audioVolume);
 
   // Focus input on mount
@@ -62,7 +65,20 @@ export default function HerbSearch() {
 
   // Save game state when it changes
   useEffect(() => {
-    saveGameState(gameState);
+    // Debounce saves to avoid blocking the UI on rapid state updates
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = window.setTimeout(() => {
+      saveGameState(gameState);
+      saveTimeoutRef.current = null;
+    }, 150);
+    return () => {
+      if (saveTimeoutRef.current !== null) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
   }, [gameState]);
 
   // Scroll output to bottom when new output is added
@@ -152,11 +168,18 @@ export default function HerbSearch() {
   };
 
   const addOutput = (type: OutputLine['type'], content: string) => {
-    setOutputHistory(prev => [...prev, {
-      type,
-      content,
-      timestamp: Date.now(),
-    }]);
+    setOutputHistory(prev => {
+      const next = [...prev, {
+        type,
+        content,
+        timestamp: Date.now(),
+      }];
+      // Keep history bounded to prevent unbounded DOM growth
+      if (next.length > OUTPUT_HISTORY_LIMIT) {
+        return next.slice(-OUTPUT_HISTORY_LIMIT);
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -136,9 +136,10 @@ async def chat(request: ChatRequest):
             }
         ]
         
-        logger.info(f"Sending chat request to Ollama (model: {OLLAMA_MODEL})")
+        logger.info(f"Sending chat request to Ollama (model: {OLLAMA_MODEL}) at {OLLAMA_URL}/api/chat")
         
         async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            # Try modern /api/chat endpoint first
             response = await client.post(
                 f"{OLLAMA_URL}/api/chat",
                 json={
@@ -147,7 +148,67 @@ async def chat(request: ChatRequest):
                     "stream": False
                 }
             )
-            
+
+            # Fallback: some Ollama versions don't support /api/chat and return 405
+            if response.status_code == 405:
+                logger.warning("Ollama /api/chat returned 405. Falling back to /api/generate.")
+                prompt_parts = []
+                # System prompt
+                if messages and messages[0]["role"] == "system":
+                    prompt_parts.append(messages[0]["content"])
+                # User message
+                prompt_parts.append(f"User: {request.message}")
+                prompt_parts.append("Assistant:")
+                prompt = "\n\n".join(prompt_parts)
+
+                gen_response = await client.post(
+                    f"{OLLAMA_URL}/api/generate",
+                    json={
+                        "model": OLLAMA_MODEL,
+                        "prompt": prompt,
+                        "stream": False
+                    }
+                )
+
+                if gen_response.status_code == 404:
+                    try:
+                        error_data = gen_response.json()
+                        error_msg = error_data.get("error", "Model not found")
+                    except Exception:
+                        error_msg = "Model not found"
+
+                    logger.error(f"Model '{OLLAMA_MODEL}' not found in Ollama. Error: {error_msg}")
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Model '{OLLAMA_MODEL}' not found. Please pull the model first: docker exec ollama ollama pull {OLLAMA_MODEL}"
+                    )
+
+                if gen_response.status_code != 200:
+                    logger.error(f"Ollama /api/generate returned status {gen_response.status_code}: {gen_response.text}")
+                    try:
+                        error_data = gen_response.json()
+                        error_msg = error_data.get("error", f"HTTP {gen_response.status_code}")
+                    except Exception:
+                        error_msg = f"HTTP {gen_response.status_code}"
+
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"Ollama API error: {error_msg}"
+                    )
+
+                data = gen_response.json()
+                message_content = data.get("response", "") or data.get("message", "")
+
+                if not message_content:
+                    logger.error("Empty message content received from Ollama /api/generate")
+                    raise HTTPException(
+                        status_code=502,
+                        detail="No message content received from Ollama"
+                    )
+
+                logger.info("Successfully received response from Ollama via /api/generate fallback")
+                return ChatResponse(message=message_content)
+
             if response.status_code == 404:
                 # Model not found - provide helpful error message
                 try:
@@ -175,7 +236,7 @@ async def chat(request: ChatRequest):
                 )
             
             data = response.json()
-            message_content = data.get("message", {}).get("content", "")
+            message_content = data.get("message", {}).get("content", "") or data.get("response", "")
             
             if not message_content:
                 logger.error("Empty message content received from Ollama")
