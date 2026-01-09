@@ -1,6 +1,5 @@
 import ProjectLayout from '@/components/ProjectLayout';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
 export default function HerbSearchProject() {
   const { t } = useTranslation();
@@ -17,12 +16,9 @@ export default function HerbSearchProject() {
               {t('projects.herbSearch.intro1')}
             </p>
             <p className="text-lg text-secondary mb-4">
-              <Link
-                to="/herb-search"
-                className="text-accent hover:underline transition-colors font-semibold"
-              >
+              <span className="font-semibold text-secondary">
                 {t('projects.herbSearch.playLink')}
-              </Link>
+              </span>
               {' '}
               {t('projects.herbSearch.intro2')}
             </p>
@@ -74,12 +70,9 @@ export default function HerbSearchProject() {
             <p className="text-lg text-secondary mb-4">
               {t('projects.herbSearch.conclusion')}
             </p>
-            <Link
-              to="/herb-search"
-              className="btn-primary inline-block px-6 py-3 rounded-lg font-semibold shadow-md mt-4"
-            >
+            <div className="inline-block px-6 py-3 rounded-lg font-semibold shadow-md mt-4 bg-surface-muted text-secondary">
               {t('projects.herbSearch.playButton')}
-            </Link>
+            </div>
           </div>
         </div>
       </div>

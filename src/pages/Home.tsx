@@ -6,7 +6,7 @@ import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
-import TreeBackground from '@/components/TreeBackground';
+import { HeroBackgroundModel } from '@/components/HeroModel';
 
 interface Project {
   id: string;
@@ -209,16 +209,23 @@ export default function Home() {
       {/* Home Section */}
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center px-4 py-12 hero-overlay relative"
+        className="min-h-screen px-4 py-12 hero-overlay relative overflow-hidden"
       >
-        <TreeBackground seed={42} />
-        <div className="text-center space-y-4 max-w-3xl mx-auto relative z-10">
-          <h1 className="text-5xl font-bold text-primary">
-            {t('home.hero.title')}
-          </h1>
-          <p className="text-xl text-secondary">
-            {t('home.hero.subtitle')}
-          </p>
+        {/* 3D model background */}
+        <HeroBackgroundModel className="absolute inset-0 z-0" />
+
+        {/* Contrast overlay so hero text stays readable */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-surface-muted/70 via-surface-muted/35 to-transparent" />
+
+        <div className="max-w-6xl mx-auto grid gap-10 items-center relative z-20">
+          <div className="text-center space-y-6">
+            <h1 className="text-5xl font-bold text-primary">
+              {t('home.hero.title')}
+            </h1>
+            <p className="text-xl text-secondary">
+              {t('home.hero.subtitle')}
+            </p>
+          </div>
         </div>
       </section>
 
