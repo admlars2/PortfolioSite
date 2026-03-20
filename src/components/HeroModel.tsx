@@ -124,11 +124,6 @@ export function HeroBackgroundModel({ className, modelPath = null }: HeroBackgro
   const resolvedModelPath = modelPath ?? earthModelUrl;
   const shouldLoadModel = Boolean(resolvedModelPath);
 
-  const backgroundColor = useMemo(
-    () => (theme === 'dark' ? '#0f172a' : '#f8fafc'),
-    [theme],
-  );
-
   // Background should never block page interactions.
   // OrbitControls still handles autoRotate even without pointer events.
   return (
@@ -140,7 +135,6 @@ export function HeroBackgroundModel({ className, modelPath = null }: HeroBackgro
         gl={{ antialias: true, powerPreference: 'default', alpha: true }}
         camera={{ position: [3.8, 1.8, 4.6], fov: 45, near: 0.1, far: 100 }}
       >
-        <color attach="background" args={[backgroundColor]} />
         <hemisphereLight intensity={0.65} groundColor="#0b1220" />
         <directionalLight position={[5, 6, 4]} intensity={1.15} />
         <directionalLight position={[-4, 2, -4]} intensity={0.55} />

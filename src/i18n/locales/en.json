@@ -23,14 +23,6 @@
       "learnMore": "Learn more",
       "items": [
         {
-          "id": "herb-search",
-          "title": "Herb Search - Text Adventure Game",
-          "description": "An interactive text-based adventure game built with React and TypeScript. Features a terminal-style interface, procedurally generated world, AI-powered NPC conversations, and command-based gameplay. Explore grandma's house, search for herbs, and solve puzzles!",
-          "route": "/herb-search-project",
-          "emoji": "🌿",
-          "imagePosition": "left"
-        },
-        {
           "id": "lang-lift",
           "title": "LangLift – Full-Stack Language Learning Platform",
           "description": "Designed and built a full-stack language-learning platform with spaced-repetition study sets, instant \"quick study\" sessions, and AI-assisted moderation/verification for user-generated content (Python/FastAPI, React/TypeScript, MongoDB, GCP).",
@@ -78,6 +70,22 @@
           "imageAlt": "Discord Twitter Bot",
           "imagePosition": "left",
           "imageFit": "contain"
+        },
+        {
+          "id": "spaceship-titanic",
+          "title": "Spaceship Titanic - Kaggle Tabular ML Pipeline",
+          "description": "Built a leakage-safe tabular ML pipeline with GroupKFold validation, group-aware imputation, and engineered cabin/spending consistency features. Compared CatBoost and HistGradientBoosting and reached 0.804 public LB (rank 627 at submission).",
+          "route": "/spaceship-titanic-kaggle-tabular-ml-pipeline",
+          "emoji": "🚀",
+          "imagePosition": "left"
+        },
+        {
+          "id": "herb-search",
+          "title": "Herb Search - Text Adventure Game",
+          "description": "An interactive text-based adventure game built with React and TypeScript. Features a terminal-style interface, procedurally generated world, AI-powered NPC conversations, and command-based gameplay. Explore grandma's house, search for herbs, and solve puzzles!",
+          "route": "/herb-search-project",
+          "emoji": "🌿",
+          "imagePosition": "left"
         }
       ]
     },
@@ -246,11 +254,29 @@
       "body2": "The first thing that stood out to me was the fact that chamber was picked 115 times compared to the 15 times that he was picked in the most recent Championship. It makes sense considering how much they changed the character after seeing how strong he was, but it was still interesting to see. Another datapoint that I thought was interesting was how little Reyna was picked, even though the people who played her were extremely successful with her. In both tournaments, she had the highest ACS average. But that data does need to be taken with a grain of salt because she was picked 5 times in the most recent tournament and 2 times in the earlier tournament.",
       "conclusion": "Overall, this was a fun project, because I was able to learn how to get data from websites and I was able to actually see meta shifts from year to year in a better way than simply looking at the pickrate of agents."
     },
+    "spaceshipTitanic": {
+      "title": "Spaceship Titanic - Kaggle Tabular ML Pipeline",
+      "summary": "Built a leakage-safe ML pipeline for the Spaceship Titanic Kaggle competition by using GroupKFold validation on passenger groups derived from PassengerId, while keeping a shared feature pipeline for train/test parity.",
+      "pipelineHeading": "Pipeline Design",
+      "pipelineBody1": "I focused on preventing leakage by splitting data with GroupKFold around passenger groups, which prevented passengers from the same group appearing in both training and validation folds.",
+      "pipelineBody2": "The project used a single, reproducible feature pipeline for both training and inference so transformations, encodings, and missing-value handling stayed consistent across all datasets.",
+      "featuresHeading": "Feature Engineering",
+      "feature1": "Parsed cabin values into deck/num/side signals and created derived cabin-consistency indicators.",
+      "feature2": "Added spending-behavior features from total and per-category usage, plus zero-spend and ratio-style indicators.",
+      "feature3": "Implemented group-aware imputations with explicit missingness flags to preserve useful uncertainty information.",
+      "modelsHeading": "Modeling Strategy",
+      "modelsBody1": "Trained and compared strong tabular baselines including CatBoost and HistGradientBoosting under the same grouped cross-validation protocol for fair evaluation.",
+      "modelsBody2": "Reviewed fold-level performance, inspected feature importance, and documented common error modes to guide further iteration.",
+      "resultsHeading": "Results",
+      "resultsBody": "Achieved a 0.804 public leaderboard score on Kaggle, ranking 627 at the time of submission.",
+      "reproHeading": "Reproducibility",
+      "reproBody": "Packaged the project as a reproducible repository using Poetry, scripted feature-pipeline steps, saved model artifacts, and generated feature-importance plots for interpretability."
+    },
     "herbSearch": {
       "title": "Herb Search - Text Adventure Game",
       "intro1": "Herb Search is an interactive text-based adventure game built with React and TypeScript. You play as a character helping their grandma search for herbs in her house. The game features a terminal-style interface with command-based gameplay, creating an immersive retro computing experience.",
-      "playLink": "Play the game",
-      "intro2": "to experience the adventure yourself!",
+      "projectFocusLabel": "Project focus:",
+      "projectFocusText": "build an immersive browser-based text adventure with a strong command parser, replayability, and maintainable frontend architecture.",
       "gameplayHeading": "Gameplay & Design",
       "gameplayBody1": "The game presents a nostalgic terminal-style interface where players interact with the world through text commands. You start by entering your name, then explore grandma's house, talk to characters, search for items, and solve puzzles. The game features a command parser that understands natural language commands like 'talk grandma', 'look around', 'go north', and more.",
       "gameplayBody2": "The world is procedurally generated using Perlin noise, creating a unique map layout for each playthrough. Players can explore different rooms, interact with NPCs, manage an inventory system, and track their progress through various game statistics.",
@@ -268,7 +294,7 @@
       "backendBody1": "The game integrates with a Python FastAPI backend for AI-powered NPC conversations. When players talk to characters like grandma, the backend uses language models to generate contextual and dynamic dialogue responses, making each conversation feel unique and natural.",
       "backendBody2": "The backend is containerized with Docker and can be easily deployed. It handles conversation state management and provides a RESTful API for the frontend to interact with NPCs.",
       "conclusion": "Herb Search combines nostalgic text adventure gameplay with modern web technologies, creating an engaging and interactive experience. The project demonstrates skills in React development, game design, API integration, and creating immersive user interfaces.",
-      "playButton": "Play Herb Search"
+      "projectSummaryBadge": "Project Case Study"
     }
   }
 }

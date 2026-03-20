@@ -16,6 +16,9 @@ export type ThemeTokens = {
   switchTrack: string;
   switchThumb: string;
   heroOverlay: string;
+  /** Hero contrast gradient (rgba) — top-left to transparent */
+  heroGradientFrom: string;
+  heroGradientVia: string;
 };
 
 export const themeTokens: Record<ThemeName, ThemeTokens> = {
@@ -35,7 +38,10 @@ export const themeTokens: Record<ThemeName, ThemeTokens> = {
     sidebarBorder: '#b8c5b8', // Sage border
     switchTrack: '#a5bec0', // Soft teal track
     switchThumb: '#ffffff', // White thumb
-    heroOverlay: '#e8f0e8', // Muted sage overlay
+    // Hero intentionally matches dark-mode space palette
+    heroOverlay: '#152018',
+    heroGradientFrom: 'rgba(13, 27, 15, 0.82)',
+    heroGradientVia: 'rgba(21, 32, 24, 0.48)',
   },
   dark: {
     // Nighttime botanical theme - deep forest greens and emerald accents
@@ -54,6 +60,8 @@ export const themeTokens: Record<ThemeName, ThemeTokens> = {
     switchTrack: '#1f2e23', // Dark emerald track
     switchThumb: '#10b981', // Emerald thumb
     heroOverlay: '#152018', // Dark forest overlay
+    heroGradientFrom: 'rgba(13, 27, 15, 0.82)',
+    heroGradientVia: 'rgba(21, 32, 24, 0.48)',
   },
 };
 

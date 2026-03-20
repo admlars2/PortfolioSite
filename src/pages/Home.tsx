@@ -7,6 +7,7 @@ import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
 import { HeroBackgroundModel } from '@/components/HeroModel';
+import HeroStarfieldOverlay from '@/components/effects/HeroStarfieldOverlay';
 
 interface Project {
   id: string;
@@ -41,28 +42,41 @@ const LinkedInIcon = () => (
 const SECTION_SPACING = 'px-4 py-20 sm:py-24';
 const SECTION_CONTAINER = 'max-w-6xl mx-auto';
 const PROJECT_IMAGE_HEIGHTS = 'h-64 sm:h-72 md:h-[360px] lg:h-[420px]';
+const PROJECT_ORDER = [
+  'lang-lift',
+  'spaceship-titanic',
+  'kanji-trainer',
+  'iot-simulator',
+  'valorant-analysis',
+  'herb-search',
+  'tales-of-tiny',
+  'discord-bots',
+] as const;
+const PROJECT_MEDIA_MAP: Record<string, Pick<Project, 'image' | 'imageAlt' | 'imageFit'>> = {
+  'kanji-trainer': { image: KanjiTrainerFrontImage },
+  'tales-of-tiny': { image: TalesOfTinyImage },
+  'iot-simulator': { image: AzureIoTHubImage },
+  'valorant-analysis': { image: ValorantStatsImage },
+  'discord-bots': { image: DiscordTwitterImage, imageFit: 'contain' },
+};
 
 export default function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const projectMediaMap: Record<string, Pick<Project, 'image' | 'imageAlt' | 'imageFit'>> = useMemo(() => ({
-    'kanji-trainer': { image: KanjiTrainerFrontImage },
-    'tales-of-tiny': { image: TalesOfTinyImage },
-    'iot-simulator': { image: AzureIoTHubImage },
-    'valorant-analysis': { image: ValorantStatsImage },
-    'discord-bots': { image: DiscordTwitterImage, imageFit: 'contain' },
-  }), []);
-
   const projects = useMemo(() => {
     const items = t('home.projects.items', { returnObjects: true }) as Project[];
-    return items.map((item) => ({
-      ...item,
-      ...projectMediaMap[item.id],
-      imageAlt: item.imageAlt ?? projectMediaMap[item.id]?.imageAlt ?? item.title,
-    }));
-  }, [projectMediaMap, t]);
+    const itemById = Object.fromEntries(items.map((item) => [item.id, item])) as Record<string, Project>;
+    return PROJECT_ORDER
+      .map((id) => itemById[id])
+      .filter(Boolean)
+      .map((item) => ({
+        ...item,
+        ...PROJECT_MEDIA_MAP[item.id],
+        imageAlt: item.imageAlt ?? PROJECT_MEDIA_MAP[item.id]?.imageAlt ?? item.title,
+      }));
+  }, [t]);
 
   const skills = useMemo(() => t('home.skills.items', { returnObjects: true }) as Skill[], [t]);
   const socialLinks = useMemo(() => t('home.contact.socialLinks', { returnObjects: true }) as { name: string; url: string }[], [t]);
@@ -78,12 +92,6 @@ export default function Home() {
     }),
     [socialLinks],
   );
-
-  // Preload LCP image (first project image)
-  React.useEffect(() => {
-    // LangLift doesn't have an image, so skip preload for now
-    // If an image is added later, update this
-  }, []);
 
   // Restore scroll position when returning to home page
   // Use location.pathname as dependency to detect navigation back to home
@@ -211,18 +219,21 @@ export default function Home() {
         id="home"
         className="min-h-screen px-4 py-12 hero-overlay relative overflow-hidden"
       >
-        {/* 3D model background */}
-        <HeroBackgroundModel className="absolute inset-0 z-0" />
+        {/* Stars furthest back */}
+        <HeroStarfieldOverlay className="z-0" />
 
-        {/* Contrast overlay so hero text stays readable */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-surface-muted/70 via-surface-muted/35 to-transparent" />
+        {/* 3D model on top of stars */}
+        <HeroBackgroundModel className="absolute inset-0 z-[1]" />
+
+        {/* Contrast overlay (theme-aware sky / night tones, not sage surface-muted) */}
+        <div className="hero-gradient-overlay absolute inset-0 z-10 pointer-events-none" />
 
         <div className="max-w-6xl mx-auto grid gap-10 items-center relative z-20">
           <div className="text-center space-y-6">
-            <h1 className="text-5xl font-bold text-primary">
+            <h1 className="text-5xl font-bold text-slate-100 drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
               {t('home.hero.title')}
             </h1>
-            <p className="text-xl text-secondary">
+            <p className="text-xl text-slate-200/90 drop-shadow-[0_1px_10px_rgba(0,0,0,0.35)]">
               {t('home.hero.subtitle')}
             </p>
           </div>

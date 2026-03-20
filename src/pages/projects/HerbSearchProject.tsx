@@ -17,10 +17,10 @@ export default function HerbSearchProject() {
             </p>
             <p className="text-lg text-secondary mb-4">
               <span className="font-semibold text-secondary">
-                {t('projects.herbSearch.playLink')}
+                {t('projects.herbSearch.projectFocusLabel')}
               </span>
               {' '}
-              {t('projects.herbSearch.intro2')}
+              {t('projects.herbSearch.projectFocusText')}
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export default function HerbSearchProject() {
               {t('projects.herbSearch.conclusion')}
             </p>
             <div className="inline-block px-6 py-3 rounded-lg font-semibold shadow-md mt-4 bg-surface-muted text-secondary">
-              {t('projects.herbSearch.playButton')}
+              {t('projects.herbSearch.projectSummaryBadge')}
             </div>
           </div>
         </div>
