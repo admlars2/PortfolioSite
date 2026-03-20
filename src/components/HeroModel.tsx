@@ -1,19 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import {
-  ContactShadows,
-  Environment,
-  OrbitControls,
-} from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { useTheme } from '@/contexts/ThemeContext';
 
 import earthModelUrl from '@/assets/models/low_poly_planet_earth.glb?url';
-
-interface HeroModelProps {
-  modelPath?: string | null;
-}
 
 interface HeroBackgroundModelProps {
   className?: string;
@@ -31,6 +23,7 @@ function LoadedModel({ url, onLoaded, onError }: LoadedModelProps) {
 
   useEffect(() => {
     let active = true;
+    const group = groupRef.current;
     const loader = new GLTFLoader();
 
     loader.load(
@@ -74,7 +67,6 @@ function LoadedModel({ url, onLoaded, onError }: LoadedModelProps) {
           scene.scale.setScalar(scale);
         }
 
-        const group = groupRef.current;
         if (group) {
           group.clear();
           group.add(scene);
@@ -92,7 +84,7 @@ function LoadedModel({ url, onLoaded, onError }: LoadedModelProps) {
 
     return () => {
       active = false;
-      groupRef.current?.clear();
+      group?.clear();
     };
   }, [onError, onLoaded, url]);
 
@@ -109,7 +101,7 @@ function FallbackGlobe({ theme }: { theme: 'light' | 'dark' }) {
     mesh.rotation.x += delta * 0.05;
   });
 
-  const color = theme === 'dark' ? '#60a5fa' : '#3C6E71';
+  const color = theme === 'dark' ? '#8b5cf6' : '#7a45b8';
 
   return (
     <mesh ref={meshRef} castShadow receiveShadow>
@@ -123,6 +115,8 @@ export function HeroBackgroundModel({ className, modelPath = null }: HeroBackgro
   const { theme } = useTheme();
   const resolvedModelPath = modelPath ?? earthModelUrl;
   const shouldLoadModel = Boolean(resolvedModelPath);
+  const handleModelLoaded = useCallback(() => {}, []);
+  const handleModelError = useCallback(() => {}, []);
 
   // Background should never block page interactions.
   // OrbitControls still handles autoRotate even without pointer events.
@@ -140,7 +134,7 @@ export function HeroBackgroundModel({ className, modelPath = null }: HeroBackgro
         <directionalLight position={[-4, 2, -4]} intensity={0.55} />
         <group position={[0, -0.15, 0]}>
           {shouldLoadModel && resolvedModelPath ? (
-            <LoadedModel url={resolvedModelPath} onLoaded={() => {}} onError={() => {}} />
+            <LoadedModel url={resolvedModelPath} onLoaded={handleModelLoaded} onError={handleModelError} />
           ) : (
             <FallbackGlobe theme={theme} />
           )}
@@ -151,95 +145,6 @@ export function HeroBackgroundModel({ className, modelPath = null }: HeroBackgro
           enableRotate={false}
           autoRotate
           autoRotateSpeed={0.55}
-        />
-      </Canvas>
-    </div>
-  );
-}
-
-export default function HeroModel({ modelPath = null }: HeroModelProps) {
-  const { theme } = useTheme();
-  const resolvedModelPath = modelPath ?? earthModelUrl;
-  const shouldLoadModel = Boolean(resolvedModelPath);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!shouldLoadModel) {
-      setStatus('ready');
-      setErrorMessage(null);
-      return;
-    }
-    setStatus('loading');
-    setErrorMessage(null);
-  }, [resolvedModelPath, shouldLoadModel]);
-
-  const handleLoaded = useCallback(() => {
-    setStatus('ready');
-  }, []);
-
-  const handleError = useCallback((message: string) => {
-    setStatus('error');
-    setErrorMessage(message);
-  }, []);
-
-  const backgroundColor = useMemo(
-    () => (theme === 'dark' ? '#0f172a' : '#f8fafc'),
-    [theme],
-  );
-
-  const overlayMessage = errorMessage ?? 'Loading 3D model…';
-  const showOverlay = shouldLoadModel && status !== 'ready';
-
-  return (
-    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-surface-muted bg-surface-muted/60 shadow-2xl">
-      {showOverlay && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 text-center bg-surface/70 backdrop-blur-sm text-secondary">
-          <div className="space-y-2">
-            <p className="font-semibold text-primary">
-              {errorMessage ? 'Model unavailable' : 'Preparing model'}
-            </p>
-            <p className="text-sm">{overlayMessage}</p>
-          </div>
-        </div>
-      )}
-      <Canvas
-        shadows
-        camera={{ position: [3.3, 2.2, 4.1], fov: 45 }}
-        className={status === 'error' ? 'opacity-60' : undefined}
-      >
-        <color attach="background" args={[backgroundColor]} />
-        <hemisphereLight intensity={0.35} groundColor="#0f172a" />
-        <directionalLight
-          position={[5, 6, 4]}
-          intensity={1}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-        />
-        <directionalLight position={[-4, 2, -4]} intensity={0.5} />
-        <group position={[0, -0.25, 0]}>
-          {shouldLoadModel && resolvedModelPath ? (
-            <LoadedModel url={resolvedModelPath} onLoaded={handleLoaded} onError={handleError} />
-          ) : (
-            <FallbackGlobe theme={theme} />
-          )}
-        </group>
-        <ContactShadows
-          position={[0, -1.2, 0]}
-          opacity={0.5}
-          scale={10}
-          blur={3}
-          far={5}
-        />
-        <Environment preset={theme === 'dark' ? 'city' : 'sunset'} />
-        <OrbitControls
-          enablePan={false}
-          enableZoom
-          autoRotate
-          autoRotateSpeed={0.8}
-          maxDistance={8}
-          minDistance={2}
         />
       </Canvas>
     </div>

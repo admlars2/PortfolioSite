@@ -127,22 +127,6 @@
       ]
     }
   },
-  "treeAdjustment": {
-    "title": "Tree Adjustment",
-    "seed": "Seed: {{value}}",
-    "initialLength": "Initial Length: {{value}}",
-    "initialRadius": "Initial Radius: {{value}}",
-    "sectionCount": "Section Count: {{value}}",
-    "faceCount": "Face Count: {{value}}",
-    "taper": "Taper: {{value}} (trunk: full, branches: reduced)",
-    "taperHint": "Taper affects trunk fully; branches taper at reduced rate with minimum radius protection",
-    "twist": "Twist: {{value}}°",
-    "segments": "Segments: {{value}}",
-    "angleStep": "Angle Step: {{value}}°",
-    "gnarliness": "Gnarliness: {{value}}",
-    "upwardForce": "Upward Force: {{value}}",
-    "wireframe": "Wireframe Mode"
-  },
   "theme": {
     "toggle": "Toggle theme",
     "light": "Light",

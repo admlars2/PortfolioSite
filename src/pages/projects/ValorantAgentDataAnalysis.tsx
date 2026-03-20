@@ -1,6 +1,32 @@
 import ProjectLayout from '@/components/ProjectLayout';
 import { useTranslation } from 'react-i18next';
 
+const SHEET_EMBED_STYLE = { borderColor: 'var(--color-accent)', minWidth: '1175px' } as const;
+
+interface GoogleSheetEmbedProps {
+  src: string;
+  title: string;
+}
+
+function GoogleSheetEmbed({ src, title }: GoogleSheetEmbedProps) {
+  return (
+    <div className="mb-8 overflow-x-auto">
+      <div className="inline-block min-w-full">
+        <iframe
+          src={src}
+          width="1175"
+          height="510"
+          frameBorder="0"
+          scrolling="no"
+          className="border-4 rounded-lg w-full max-w-full"
+          style={SHEET_EMBED_STYLE}
+          title={title}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ValorantAgentDataAnalysis() {
   const { t } = useTranslation();
   return (
@@ -10,7 +36,7 @@ export default function ValorantAgentDataAnalysis() {
           {t('projects.valorantAnalysis.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.intro1')}
           </p>
@@ -32,20 +58,10 @@ export default function ValorantAgentDataAnalysis() {
             {t('projects.valorantAnalysis.section2023Heading')}
           </p>
 
-          <div className="mb-8 overflow-x-auto">
-            <div className="inline-block min-w-full">
-                <iframe 
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQSifwTDhEml9uobQXL9LWoXGl-S4yyOgJ6Xjwd2R7Mt15S5ZvnBhaVljkHXlWCHw/pubhtml?gid=93540032&single=true&widget=true&headers=false" 
-                width="1175" 
-                height="510" 
-                  frameBorder="0" 
-                scrolling="no" 
-                  className="border-4 rounded-lg w-full max-w-full"
-                  style={{ borderColor: 'var(--color-accent)', minWidth: '1175px' }}
-                  title={t('projects.valorantAnalysis.table2023Title')}
-              />
-            </div>
-          </div>
+          <GoogleSheetEmbed
+            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQSifwTDhEml9uobQXL9LWoXGl-S4yyOgJ6Xjwd2R7Mt15S5ZvnBhaVljkHXlWCHw/pubhtml?gid=93540032&single=true&widget=true&headers=false"
+            title={t('projects.valorantAnalysis.table2023Title')}
+          />
 
           <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.body1')}
@@ -55,20 +71,10 @@ export default function ValorantAgentDataAnalysis() {
             {t('projects.valorantAnalysis.section2022Heading')}
           </p>
 
-          <div className="mb-8 overflow-x-auto">
-            <div className="inline-block min-w-full">
-                <iframe 
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQkIcYYSUHabUWeqkacEofvjTn63Nh4qxWFICiakZ025CsFgwKIxr71eO7qy3enUg/pubhtml?gid=1971645227&single=true&widget=true&headers=false" 
-                width="1175" 
-                height="510" 
-                  frameBorder="0" 
-                scrolling="no" 
-                  className="border-4 rounded-lg w-full max-w-full"
-                  style={{ borderColor: 'var(--color-accent)', minWidth: '1175px' }}
-                  title={t('projects.valorantAnalysis.table2022Title')}
-              />
-            </div>
-          </div>
+          <GoogleSheetEmbed
+            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQkIcYYSUHabUWeqkacEofvjTn63Nh4qxWFICiakZ025CsFgwKIxr71eO7qy3enUg/pubhtml?gid=1971645227&single=true&widget=true&headers=false"
+            title={t('projects.valorantAnalysis.table2022Title')}
+          />
 
           <p className="text-lg text-secondary mb-4">
             {t('projects.valorantAnalysis.body2')}

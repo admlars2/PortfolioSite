@@ -12,24 +12,24 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Default botanical light theme - will be overridden by ThemeContext */
-  --color-background: #CAD5CA;
-  --color-surface: #f8fcf8;
-  --color-surface-muted: #e8f0e8;
+  /* Default nebula light theme - overridden by ThemeContext */
+  --color-background: #f3eefb;
+  --color-surface: #fbf8ff;
+  --color-surface-muted: #efe7fb;
   --color-card: #ffffff;
-  --color-text: #1a2a1f;
-  --color-text-muted: #4a5c4f;
-  --color-border: #b8c5b8;
-  --color-accent: #3C6E71;
-  --color-accent-hover: #2d5558;
-  --color-accent-contrast: #ffffff;
-  --color-sidebar: #f8fcf8;
-  --color-sidebar-border: #b8c5b8;
-  --color-switch-track: #a5bec0;
+  --color-text: #221734;
+  --color-text-muted: #5c4a75;
+  --color-border: #d5c6e9;
+  --color-accent: #9b1c48;
+  --color-accent-hover: #7f153b;
+  --color-accent-contrast: #fff7fb;
+  --color-sidebar: #f8f3ff;
+  --color-sidebar-border: #d9caed;
+  --color-switch-track: #d8c9eb;
   --color-switch-thumb: #ffffff;
-  --color-hero-overlay: #152018;
-  --color-hero-gradient-from: rgba(13, 27, 15, 0.82);
-  --color-hero-gradient-via: rgba(21, 32, 24, 0.48);
+  --color-hero-overlay: #0f0a1d;
+  --color-hero-gradient-from: rgba(121, 33, 76, 0.72);
+  --color-hero-gradient-via: rgba(79, 49, 145, 0.45);
 }
 
 html,

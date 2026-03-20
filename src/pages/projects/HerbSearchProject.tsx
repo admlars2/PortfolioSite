@@ -10,7 +10,7 @@ export default function HerbSearchProject() {
           {t('projects.herbSearch.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <div className="mb-8 bg-card rounded-lg p-6 border border-default">
             <p className="text-lg text-secondary mb-4">
               {t('projects.herbSearch.intro1')}

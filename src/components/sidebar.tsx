@@ -44,11 +44,26 @@ export default function Sidebar() {
     { id: 'skills', label: t('nav.skills'), href: '/', hash: 'skills' },
     { id: 'contact', label: t('nav.contact'), href: '/', hash: 'contact' },
   ]), [t]);
+  const getClosestSectionId = useCallback((scrollContainer: HTMLElement) => {
+    const containerRect = scrollContainer.getBoundingClientRect();
+    let closestSectionId = 'home';
+    let closestDistance = Infinity;
 
-  /**
-   * Custom smooth scroll function with ease-in-out cubic easing
-   * Uses requestAnimationFrame for smooth 60fps animation
-   */
+    for (const section of navSections) {
+      const element = document.getElementById(section.id);
+      if (!element) continue;
+
+      const offset = element.getBoundingClientRect().top - containerRect.top;
+      const distance = Math.abs(offset);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestSectionId = section.id;
+      }
+    }
+
+    return closestSectionId;
+  }, [navSections]);
+
   const smoothScrollTo = useCallback((target: number, duration: number = 800): Promise<void> => {
     return new Promise((resolve) => {
       const scrollContainer = document.querySelector('main') as HTMLElement;
@@ -57,7 +72,6 @@ export default function Sidebar() {
         return;
       }
       
-      // Cancel any ongoing scroll animation
       if (scrollTimeoutRef.current) {
         cancelAnimationFrame(scrollTimeoutRef.current);
       }
@@ -65,7 +79,6 @@ export default function Sidebar() {
       const start = scrollContainer.scrollTop;
       const distance = target - start;
 
-      // If there's nothing to scroll, resolve immediately to avoid blocking user scroll
       if (Math.abs(distance) < 1) {
         scrollContainer.scrollTop = target;
         resolve();
@@ -74,7 +87,6 @@ export default function Sidebar() {
 
       let startTime: number | null = null;
 
-      // Ease-in-out cubic function for smooth acceleration/deceleration
       const easeInOutCubic = (t: number): number => {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       };
@@ -99,10 +111,6 @@ export default function Sidebar() {
     });
   }, []);
 
-  /**
-   * Scrolls to a section by hash ID with retry logic
-   * Handles cases where DOM might not be ready yet
-   */
   const scrollToSection = useCallback((hash: string): Promise<void> => {
     return new Promise((resolve) => {
       const attemptScroll = (): boolean => {
@@ -112,11 +120,8 @@ export default function Sidebar() {
         if (element && scrollContainer) {
           // Use requestAnimationFrame to ensure DOM is ready
           requestAnimationFrame(() => {
-            // Get bounding rects relative to viewport
             const elementRect = element.getBoundingClientRect();
             const containerRect = scrollContainer.getBoundingClientRect();
-            
-            // Calculate scroll position: current scroll + (element top - container top)
             const targetPosition = scrollContainer.scrollTop + (elementRect.top - containerRect.top);
             
             smoothScrollTo(targetPosition).then(() => resolve());
@@ -126,10 +131,8 @@ export default function Sidebar() {
         return false;
       };
 
-      // Try immediately first
       if (attemptScroll()) return;
 
-      // If element not found, wait a bit and retry
       let attempts = 0;
       const maxAttempts = 20;
       const interval = setInterval(() => {
@@ -137,68 +140,39 @@ export default function Sidebar() {
         if (attemptScroll() || attempts >= maxAttempts) {
           clearInterval(interval);
           if (attempts >= maxAttempts) {
-            resolve(); // Resolve even if element not found to prevent hanging
+            resolve();
           }
         }
       }, 100);
     });
   }, [smoothScrollTo]);
-
-  /**
-   * Handles hash changes from URL (browser back/forward, direct navigation)
-   */
   useEffect(() => {
     if (location.pathname !== '/') return;
 
-    // Check if we're restoring scroll position from a project page (non-blocking)
     let isRestoringScroll = false;
     try {
       isRestoringScroll = !!sessionStorage.getItem('homeScrollPosition');
     } catch {
-      // Ignore storage errors
+      // Ignore storage errors.
     }
     if (isRestoringScroll) {
-      // Don't trigger scroll animation, let Home component handle scroll restoration
-      // Just update the active section based on current scroll position
       const scrollContainer = document.querySelector('main') as HTMLElement | null;
       if (scrollContainer) {
-        // Let the scroll restoration happen first, then update active section
         setTimeout(() => {
-          const containerRect = scrollContainer.getBoundingClientRect();
-          let closestSectionId = 'home';
-          let closestDistance = Infinity;
-
-          for (const section of navSections) {
-            const element = document.getElementById(section.id);
-            if (!element) continue;
-
-            const rect = element.getBoundingClientRect();
-            const offset = rect.top - containerRect.top;
-            const distance = Math.abs(offset);
-
-            if (distance < closestDistance) {
-              closestDistance = distance;
-              closestSectionId = section.id;
-            }
-          }
-
-          setActiveSectionId(closestSectionId);
+          setActiveSectionId(getClosestSectionId(scrollContainer));
         }, 300);
       }
       return;
     }
 
-    const hash = location.hash.slice(1); // Remove the '#' symbol
+    const hash = location.hash.slice(1);
 
-    // Keep active section in sync with URL hash when navigating
     setActiveSectionId(hash || 'home');
-    
-    // Small delay to ensure DOM is ready after route change
+
     const timeoutId = setTimeout(() => {
       if (hash) {
         scrollToSection(hash);
       } else {
-        // Avoid animated scroll on initial load so user can scroll immediately
         const scrollContainer = document.querySelector('main') as HTMLElement | null;
         if (scrollContainer) {
           scrollContainer.scrollTop = 0;
@@ -209,11 +183,8 @@ export default function Sidebar() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [location.pathname, location.hash, navSections, scrollToSection, smoothScrollTo]);
+  }, [location.pathname, location.hash, getClosestSectionId, scrollToSection, smoothScrollTo]);
 
-  /**
-   * Track scroll position inside the main container and update active section
-   */
   useEffect(() => {
     if (location.pathname !== '/') return;
 
@@ -221,40 +192,18 @@ export default function Sidebar() {
     if (!scrollContainer) return;
 
     const handleScroll = () => {
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      let closestSectionId = 'home';
-      let closestDistance = Infinity;
-
-      for (const section of navSections) {
-        const element = document.getElementById(section.id);
-        if (!element) continue;
-
-        const rect = element.getBoundingClientRect();
-        const offset = rect.top - containerRect.top;
-        const distance = Math.abs(offset);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestSectionId = section.id;
-        }
-      }
-
+      const closestSectionId = getClosestSectionId(scrollContainer);
       setActiveSectionId((prev) => (prev === closestSectionId ? prev : closestSectionId));
     };
 
-    // Initialize once on mount
     handleScroll();
 
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => {
       scrollContainer.removeEventListener('scroll', handleScroll);
     };
-  }, [location.pathname, navSections]);
+  }, [getClosestSectionId, location.pathname]);
 
-  /**
-   * Cleanup function to cancel any ongoing scroll animations
-   */
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
@@ -267,28 +216,21 @@ export default function Sidebar() {
     e.preventDefault();
     e.stopPropagation();
     
-    // Close sidebar after a short delay to allow navigation
     setTimeout(() => {
       setIsHovered(false);
     }, 100);
     
     if (section.hash) {
-      // Navigate to home first if not already there
       if (location.pathname !== '/') {
         navigate(`/#${section.hash}`, { replace: false });
       } else {
-        // Already on home page, update hash and scroll
         navigate(`/#${section.hash}`, { replace: true });
-        // Scroll will be handled by useEffect watching location.hash
       }
     } else {
-      // Home section - navigate to top
       if (location.pathname !== '/') {
         navigate('/', { replace: false });
-        // Scroll will be handled by useEffect watching location.hash
       } else {
         navigate('/', { replace: true });
-        // Small delay to ensure hash is cleared
         setTimeout(() => {
           smoothScrollTo(0);
         }, 50);
@@ -303,10 +245,15 @@ export default function Sidebar() {
     },
     [location.pathname, activeSectionId],
   );
+  const openSidebar = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+  const closeSidebar = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   return (
     <>
-      {/* Gradient indicator bar */}
       <div
         data-sidebar-trigger
         className={`fixed left-0 top-0 h-full z-50
@@ -318,10 +265,9 @@ export default function Sidebar() {
           background: 'linear-gradient(to right, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0))',
           maxWidth: '100vw'
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onClick={() => setIsHovered(true)}
+        onMouseEnter={openSidebar}
+        onClick={openSidebar}
       >
-        {/* Arrow indicator */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <svg
             className="w-3 h-3 text-white"
@@ -333,7 +279,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Sidebar */}
       <aside
         ref={sidebarRef}
         className={`fixed left-0 top-0 h-full w-64 md:w-72 lg:w-80 bg-sidebar border-r border-sidebar shadow-lg z-40 transition-transform duration-300 ease-in-out will-change-transform text-primary ${
@@ -343,11 +288,10 @@ export default function Sidebar() {
           contain: 'layout style paint',
           maxWidth: '100vw'
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={openSidebar}
+        onMouseLeave={closeSidebar}
       >
         <div className="flex flex-col text-xl align-middle justify-center gap-y-2 h-full p-6">
-          {/* Navigation sections */}
           <nav className="flex-1 flex flex-col items-center justify-center gap-4">
             {navSections.map((section) => (
               <button
@@ -364,9 +308,7 @@ export default function Sidebar() {
             ))}
           </nav>
 
-          {/* Theme toggle and language selector */}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-3 text-lg">
-            {/* Theme toggle */}
+          <div className="mt-6 pt-6 border-t border-default space-y-3 text-lg">
             <div className="flex items-center justify-between px-4 py-2">
               <span className="text-sm text-secondary">
                 {t('theme.toggle')}
@@ -374,7 +316,6 @@ export default function Sidebar() {
               <ThemeSwitch />
             </div>
 
-            {/* Language selector */}
             <div className="flex items-center justify-between px-4 py-2">
               <label htmlFor="language-select" className="text-sm text-secondary">
                 {t('language.select')}

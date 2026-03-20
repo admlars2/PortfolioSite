@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ValorantStatsImage from '@/assets/images/ValorantStats.png';
@@ -42,6 +42,8 @@ const LinkedInIcon = () => (
 const SECTION_SPACING = 'px-4 py-20 sm:py-24';
 const SECTION_CONTAINER = 'max-w-6xl mx-auto';
 const PROJECT_IMAGE_HEIGHTS = 'h-64 sm:h-72 md:h-[360px] lg:h-[420px]';
+const PROJECT_CARD_BASE_CLASSES = 'flex flex-col gap-8 bg-card rounded-2xl shadow-lg overflow-hidden md:items-stretch transition-colors';
+const MEDIA_ASPECT_RATIO_STYLE = { aspectRatio: '16/9' } as const;
 const PROJECT_ORDER = [
   'lang-lift',
   'spaceship-titanic',
@@ -93,67 +95,58 @@ export default function Home() {
     [socialLinks],
   );
 
-  // Restore scroll position when returning to home page
-  // Use location.pathname as dependency to detect navigation back to home
-  React.useEffect(() => {
-    // Only restore if we're on the home page and have a saved scroll position
+  useEffect(() => {
     if (location.pathname !== '/') return;
 
     const mainElement = document.querySelector('main');
     if (!mainElement) return;
 
-    // Try to restore scroll position from sessionStorage
     const savedScroll = sessionStorage.getItem('homeScrollPosition');
-    if (savedScroll) {
-      const scrollValue = parseInt(savedScroll, 10);
-      let attempts = 0;
-      const maxAttempts = 100; // Increased attempts for more reliable restoration
-      
-      // Use multiple attempts to ensure scroll restoration works
-      // This handles cases where content might still be loading
-      const restoreScroll = () => {
-        attempts++;
-        const currentScrollHeight = mainElement.scrollHeight;
-        
-        if (currentScrollHeight >= scrollValue || attempts >= maxAttempts) {
-          // Restore scroll position
-          mainElement.scrollTop = Math.min(scrollValue, currentScrollHeight);
-          // Clear the saved position after restoring
-          sessionStorage.removeItem('homeScrollPosition');
-        } else {
-          // If content isn't tall enough yet, try again
-          requestAnimationFrame(restoreScroll);
-        }
-      };
-      
-      // Start restoration after multiple animation frames to ensure DOM is ready
-      // and React Router has finished rendering
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(restoreScroll);
-        });
-      });
+    if (!savedScroll) return;
+
+    const scrollValue = Number.parseInt(savedScroll, 10);
+    if (Number.isNaN(scrollValue)) {
+      sessionStorage.removeItem('homeScrollPosition');
+      return;
     }
+
+    let attempts = 0;
+    const maxAttempts = 60;
+    let frameId = 0;
+    const restoreScroll = () => {
+      attempts += 1;
+      const maxScrollable = Math.max(mainElement.scrollHeight - mainElement.clientHeight, 0);
+      if (maxScrollable >= scrollValue || attempts >= maxAttempts) {
+        mainElement.scrollTop = Math.min(scrollValue, maxScrollable);
+        sessionStorage.removeItem('homeScrollPosition');
+        return;
+      }
+      frameId = requestAnimationFrame(restoreScroll);
+    };
+
+    frameId = requestAnimationFrame(restoreScroll);
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
   }, [location.pathname]);
 
-  const handleProjectClick = (route: string, e?: React.MouseEvent) => {
-    // Prevent any default behavior
+  const handleProjectClick = useCallback((route: string, e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
-    // Use pageshow event for back/forward cache compatibility
+
     const mainElement = document.querySelector('main');
     if (mainElement) {
-      // Store scroll position but don't block cache
       try {
         sessionStorage.setItem('homeScrollPosition', mainElement.scrollTop.toString());
       } catch {
-        // Ignore storage errors
+        // Ignore storage errors.
       }
     }
-    // Use replace: false to ensure proper navigation
+
     navigate(route, { replace: false });
-  };
+  }, [navigate]);
 
   const renderProjectImage = (project: Project, index: number) => {
     if (project.image) {
@@ -166,14 +159,11 @@ export default function Home() {
         ? 'max-h-full w-full object-contain'
         : 'h-full w-full object-cover';
       
-      // First image should have high priority for LCP
       const fetchPriority = index === 0 ? 'high' : 'auto';
       const loading = index === 0 ? 'eager' : 'lazy';
-      
-      // Use aspect ratio to prevent layout shift (16:9 is common for project images)
-      // Height is controlled by PROJECT_IMAGE_HEIGHTS class
+
       return (
-        <div className={containerClass} style={{ aspectRatio: '16/9' }}>
+        <div className={containerClass} style={MEDIA_ASPECT_RATIO_STYLE}>
           <img 
             src={project.image} 
             alt={project.imageAlt || project.title} 
@@ -183,7 +173,7 @@ export default function Home() {
             fetchPriority={fetchPriority}
             width="800"
             height="450"
-            style={{ aspectRatio: '16/9' }}
+            style={MEDIA_ASPECT_RATIO_STYLE}
           />
         </div>
       );
@@ -265,7 +255,7 @@ export default function Home() {
             {projects.map((project, index) => (
               <div
                 key={project.id}
-                className={`flex flex-col gap-8 bg-card rounded-2xl shadow-lg overflow-hidden md:items-stretch transition-colors ${
+                className={`${PROJECT_CARD_BASE_CLASSES} ${
                   project.imagePosition === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'
                 }`}
               >
