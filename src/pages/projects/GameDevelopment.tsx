@@ -16,7 +16,7 @@ export default function GameDevelopment() {
           {t('projects.gameDevelopment.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <div className="mb-8">
             <img 
               src={TalesOfTinyImage} 
@@ -98,13 +98,24 @@ export default function GameDevelopment() {
           </div>
 
           <p className="text-lg text-secondary mb-4">
-            For this project, my main role was the level designer. So for the beginning of the project, I ended up leading the discussion about what type of game everyone wanted to make. At first, we were all giving a large range of ideas, but I had to take all of those ideas and put them together to make a game that we could feasibly finish within the 6 week time frame that we had been given.
-            After I collected everyone's ideas and came up with a solid idea of what we wanted to do, I got to work with creating the blacklight, which presented a couple of challenges because of the way that unity handles light. The main issue was that light in unity is that it does actually tell other objects that it is interacting with it, so I had to put together a solution using HLSL to get the effect that I wanted.
-            Then I had to design all of the rooms including a hedge maze and a tiled train puzzle where the player has to rotate tracks and get the right solution. Finally, after putting everything together, you can find the game that my team produced at this link: <a href="https://pifopifo.itch.io/the-tales-of-tiny" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline transition-colors">Tales of Tiny</a>.
+            {t('projects.gameDevelopment.body1')}
+          </p>
+
+          <p className="text-lg text-secondary mb-4">
+            {t('projects.gameDevelopment.body2')}{' '}
+            <a
+              href="https://pifopifo.itch.io/the-tales-of-tiny"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline transition-colors"
+            >
+              Tales of Tiny
+            </a>
+            .
           </p>
 
           <p className="text-lg text-secondary mb-6">
-            Overall, I had a lot of fun learning to code using HLSL and creating fun but difficult puzzles.
+            {t('projects.gameDevelopment.conclusion')}
           </p>
         </div>
       </div>

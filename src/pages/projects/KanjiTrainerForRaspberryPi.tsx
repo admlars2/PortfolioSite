@@ -15,13 +15,12 @@ export default function KanjiTrainerForRaspberryPi() {
           {t('projects.kanjiTrainer.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <p className="text-lg text-secondary mb-4">
             {t('projects.kanjiTrainer.intro')}
           </p>
 
-          {/* Visual Overview */}
-          <div className="my-8 not-prose">
+          <div className="my-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">
               {t('projects.kanjiTrainer.visualOverviewHeading')}
             </h2>

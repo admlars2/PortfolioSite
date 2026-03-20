@@ -12,22 +12,24 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Default botanical light theme - will be overridden by ThemeContext */
-  --color-background: #CAD5CA;
-  --color-surface: #f8fcf8;
-  --color-surface-muted: #e8f0e8;
+  /* Default nebula light theme - overridden by ThemeContext */
+  --color-background: #f3eefb;
+  --color-surface: #fbf8ff;
+  --color-surface-muted: #efe7fb;
   --color-card: #ffffff;
-  --color-text: #1a2a1f;
-  --color-text-muted: #4a5c4f;
-  --color-border: #b8c5b8;
-  --color-accent: #3C6E71;
-  --color-accent-hover: #2d5558;
-  --color-accent-contrast: #ffffff;
-  --color-sidebar: #f8fcf8;
-  --color-sidebar-border: #b8c5b8;
-  --color-switch-track: #a5bec0;
+  --color-text: #221734;
+  --color-text-muted: #5c4a75;
+  --color-border: #d5c6e9;
+  --color-accent: #9b1c48;
+  --color-accent-hover: #7f153b;
+  --color-accent-contrast: #fff7fb;
+  --color-sidebar: #f8f3ff;
+  --color-sidebar-border: #d9caed;
+  --color-switch-track: #d8c9eb;
   --color-switch-thumb: #ffffff;
-  --color-hero-overlay: #e8f0e8;
+  --color-hero-overlay: #0f0a1d;
+  --color-hero-gradient-from: rgba(121, 33, 76, 0.72);
+  --color-hero-gradient-via: rgba(79, 49, 145, 0.45);
 }
 
 html,
@@ -117,6 +119,15 @@ body {
   background-color: var(--color-hero-overlay);
 }
 
+.hero-gradient-overlay {
+  background: linear-gradient(
+    to bottom right,
+    var(--color-hero-gradient-from),
+    var(--color-hero-gradient-via),
+    transparent
+  );
+}
+
 .btn-primary {
   background-color: var(--color-accent);
   color: var(--color-accent-contrast);
@@ -143,4 +154,38 @@ aside[class*="fixed"] {
 
 div[data-sidebar-trigger] {
   contain: layout;
+}
+
+/* Wave animation for loading dots */
+.wave-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wave-text span {
+  display: inline-block;
+  font-size: 1.5rem;
+  animation: wave 1.4s ease-in-out infinite;
+}
+
+.wave-text span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.wave-text span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wave-text span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }

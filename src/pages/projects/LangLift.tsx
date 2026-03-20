@@ -10,7 +10,7 @@ export default function LangLift() {
           {t('projects.langLift.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <p className="text-lg text-secondary mb-6">
             {t('projects.langLift.summary')}
           </p>

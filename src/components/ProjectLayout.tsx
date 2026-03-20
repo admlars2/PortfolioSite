@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 interface ProjectLayoutProps {
@@ -14,22 +14,16 @@ export default function ProjectLayout({ children }: ProjectLayoutProps) {
   // Scroll to top when project page mounts
   useEffect(() => {
     const mainElement = document.querySelector('main');
-    if (mainElement) {
-      // Scroll to top immediately when entering a project page
-      // Use requestAnimationFrame to ensure it happens after React Router's navigation
-      requestAnimationFrame(() => {
-        if (mainElement) {
-          mainElement.scrollTop = 0;
-        }
-      });
-    }
+    if (!mainElement) return;
+
+    requestAnimationFrame(() => {
+      mainElement.scrollTop = 0;
+    });
   }, []);
 
-  const handleBack = () => {
-    // Navigate to home page
-    // The Home component will handle scroll restoration via its useEffect
+  const handleBack = useCallback(() => {
     navigate('/', { replace: false });
-  };
+  }, [navigate]);
 
   return (
     <div className="h-full w-full flex flex-col bg-app text-primary">

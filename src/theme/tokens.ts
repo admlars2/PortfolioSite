@@ -16,44 +16,51 @@ export type ThemeTokens = {
   switchTrack: string;
   switchThumb: string;
   heroOverlay: string;
+  /** Hero contrast gradient (rgba) — top-left to transparent */
+  heroGradientFrom: string;
+  heroGradientVia: string;
 };
 
 export const themeTokens: Record<ThemeName, ThemeTokens> = {
   light: {
-    // Botanical light theme - soft sage greens and natural tones
-    background: '#CAD5CA', // Soft sage green background
-    surface: '#f8fcf8', // Very light green-white for cards
-    surfaceMuted: '#e8f0e8', // Muted sage for sections
-    card: '#ffffff', // Pure white cards for contrast
-    text: '#1a2a1f', // Deep forest green text
-    textMuted: '#4a5c4f', // Muted green-gray text
-    border: '#b8c5b8', // Sage green borders
-    accent: '#3C6E71', // Teal accent (from your example)
-    accentHover: '#2d5558', // Darker teal on hover
-    accentContrast: '#ffffff', // White text on accent
-    sidebar: '#f8fcf8', // Light green-white sidebar
-    sidebarBorder: '#b8c5b8', // Sage border
-    switchTrack: '#a5bec0', // Soft teal track
-    switchThumb: '#ffffff', // White thumb
-    heroOverlay: '#e8f0e8', // Muted sage overlay
+    // Nebula light theme - airy lilac surfaces with crimson accents
+    background: '#f3eefb',
+    surface: '#fbf8ff',
+    surfaceMuted: '#efe7fb',
+    card: '#ffffff',
+    text: '#221734',
+    textMuted: '#5c4a75',
+    border: '#d5c6e9',
+    accent: '#9b1c48',
+    accentHover: '#7f153b',
+    accentContrast: '#fff7fb',
+    sidebar: '#f8f3ff',
+    sidebarBorder: '#d9caed',
+    switchTrack: '#d8c9eb',
+    switchThumb: '#ffffff',
+    heroOverlay: '#0f0a1d',
+    heroGradientFrom: 'rgba(121, 33, 76, 0.72)',
+    heroGradientVia: 'rgba(79, 49, 145, 0.45)',
   },
   dark: {
-    // Nighttime botanical theme - deep forest greens and emerald accents
-    background: '#0d1b0f', // Deep forest green background
-    surface: '#152018', // Slightly lighter forest for surfaces
-    surfaceMuted: '#1a2a1f', // Muted dark green for sections
-    card: '#1f2e23', // Dark emerald card background
-    text: '#e8f5e9', // Soft green-white text
-    textMuted: '#a8c5ab', // Muted moss green text
-    border: '#2d4a35', // Dark moss border
-    accent: '#10b981', // Emerald accent
-    accentHover: '#059669', // Darker emerald on hover
-    accentContrast: '#0d1b0f', // Dark text on accent
-    sidebar: '#152018', // Dark forest sidebar
-    sidebarBorder: '#1f2e23', // Dark emerald border
-    switchTrack: '#1f2e23', // Dark emerald track
-    switchThumb: '#10b981', // Emerald thumb
-    heroOverlay: '#152018', // Dark forest overlay
+    // Nebula dark theme - deep plum surfaces with crimson accents
+    background: '#140f24',
+    surface: '#1c1630',
+    surfaceMuted: '#261d42',
+    card: '#2e2450',
+    text: '#f6f1ff',
+    textMuted: '#c9bbdf',
+    border: '#4a3970',
+    accent: '#c12659',
+    accentHover: '#9e1e49',
+    accentContrast: '#fff7fb',
+    sidebar: '#1a1430',
+    sidebarBorder: '#3a2d5f',
+    switchTrack: '#3a2d5f',
+    switchThumb: '#c12659',
+    heroOverlay: '#110a20',
+    heroGradientFrom: 'rgba(108, 26, 80, 0.76)',
+    heroGradientVia: 'rgba(66, 38, 126, 0.48)',
   },
 };
 

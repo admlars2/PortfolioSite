@@ -11,7 +11,7 @@ export default function DiscordBots() {
           {t('projects.discordBots.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <div className="mb-8">
             <img 
               src={DiscordTwitterImage} 

@@ -10,7 +10,7 @@ export default function IotSensorSimulatorWithAzureIotHub() {
           {t('projects.iotSimulator.title')}
         </h1>
         
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="max-w-none">
           <p className="text-lg text-secondary mb-4">
             {t('projects.iotSimulator.intro')}
           </p>

@@ -6,6 +6,127 @@
     "skills": "Skills",
     "contact": "Contact"
   },
+  "common": {
+    "loading": "Loading..."
+  },
+  "home": {
+    "hero": {
+      "title": "Home",
+      "subtitle": "Welcome to my portfolio"
+    },
+    "about": {
+      "heading": "Career Objective",
+      "body": "I am a Computer Science student looking to pursue an opportunity in the field of software engineering. Utilizing my strong foundation in building software and writing algorithms, I aim to gain practical experience and collaborate with professionals in the industry. I am excited to explore my passion for technology in real-world scenarios."
+    },
+    "projects": {
+      "heading": "Projects",
+      "learnMore": "Learn more",
+      "items": [
+        {
+          "id": "lang-lift",
+          "title": "LangLift – Full-Stack Language Learning Platform",
+          "description": "Designed and built a full-stack language-learning platform with spaced-repetition study sets, instant \"quick study\" sessions, and AI-assisted moderation/verification for user-generated content (Python/FastAPI, React/TypeScript, MongoDB, GCP).",
+          "route": "/lang-lift",
+          "emoji": "📚",
+          "imagePosition": "left"
+        },
+        {
+          "id": "kanji-trainer",
+          "title": "Kanji Trainer for Raspberry Pi",
+          "description": "Developed a spaced repetition application using the SM2 algorithm (SuperMemo) to help users learn Japanese kanji and words efficiently. Configured and optimized to run on Raspberry Pi with SDL2 for graphical rendering and SQLite database integration.",
+          "route": "/kanji-trainer-for-raspberry-pi",
+          "imageAlt": "Kanji Trainer front interface",
+          "imagePosition": "left"
+        },
+        {
+          "id": "tales-of-tiny",
+          "title": "Lead Game Developer - \"Tales of Tiny\" Puzzle Game",
+          "description": "Led brainstorming sessions and combined key ideas into a fun, exciting puzzle game. Used Unity's game engine to develop mechanics and controls, designed challenging puzzles, and coordinated with the team to deliver a polished game within our deadline.",
+          "route": "/game-development",
+          "imageAlt": "Tales of Tiny",
+          "imagePosition": "left"
+        },
+        {
+          "id": "iot-simulator",
+          "title": "IoT Sensor Simulator with Azure IoT Hub",
+          "description": "Collaborated with a cross-functional team to design a robust IoT sensor simulation system for real-time monitoring. Developed Python scripts to generate and send simulated sensor data using MQTT protocol and integrated with Azure IoT Hub.",
+          "route": "/iot-sensor-simulator-with-azure-iot-hub",
+          "imageAlt": "IoT Sensor Simulator with Azure IoT Hub",
+          "imagePosition": "left"
+        },
+        {
+          "id": "valorant-analysis",
+          "title": "Data Analysis",
+          "description": "After watching the recent valorant tournament, I was interested in finding the stats for each agent played. Unfortunately these stats were not compiled in one location, so I decided to get all of the data and compile it myself.",
+          "route": "/valorant-agent-data-analysis",
+          "imageAlt": "Valorant Stats",
+          "imagePosition": "left"
+        },
+        {
+          "id": "discord-bots",
+          "title": "Discord Bots",
+          "description": "In this project, I decided that I wanted to learn how to use an API so I combined two of them. I coded a discord bot that would send all tweets from user defined accounts to the set channel in discord.",
+          "route": "/discord-bots",
+          "imageAlt": "Discord Twitter Bot",
+          "imagePosition": "left",
+          "imageFit": "contain"
+        },
+        {
+          "id": "spaceship-titanic",
+          "title": "Spaceship Titanic - Kaggle Tabular ML Pipeline",
+          "description": "Built a leakage-safe tabular ML pipeline with GroupKFold validation, group-aware imputation, and engineered cabin/spending consistency features. Compared CatBoost and HistGradientBoosting and reached 0.804 public LB (rank 627 at submission).",
+          "route": "/spaceship-titanic-kaggle-tabular-ml-pipeline",
+          "emoji": "🚀",
+          "imagePosition": "left"
+        },
+        {
+          "id": "herb-search",
+          "title": "Herb Search - Text Adventure Game",
+          "description": "An interactive text-based adventure game built with React and TypeScript. Features a terminal-style interface, procedurally generated world, AI-powered NPC conversations, and command-based gameplay. Explore grandma's house, search for herbs, and solve puzzles!",
+          "route": "/herb-search-project",
+          "emoji": "🌿",
+          "imagePosition": "left"
+        }
+      ]
+    },
+    "skills": {
+      "heading": "Skills",
+      "intro": "I have been working with Computer Programming for more than 8 years now. Here are a few of the skills that I have acquired.",
+      "items": [
+        { "emoji": "🐍", "name": "Python", "experience": "10 Years Experience" },
+        { "emoji": "☕", "name": "Java", "experience": "6 Years Experience" },
+        { "emoji": "⚙️", "name": "C++", "experience": "2 Years Experience" },
+        { "emoji": "🎮", "name": "C# & HLSL", "experience": "3 Years Experience" },
+        { "emoji": "🎯", "name": "Unity", "experience": "3 Years Experience" },
+        { "emoji": "🔷", "name": "Object Oriented Programming", "experience": "10 Years Experience" },
+        { "emoji": "🧠", "name": "System Design", "experience": "2 Years Experience" },
+        { "emoji": "🌐", "name": "Web Development", "experience": "2 Years Experience" },
+        { "emoji": "📘", "name": "TypeScript", "experience": "2 Years Experience" },
+        { "emoji": "🟨", "name": "JavaScript", "experience": "1 Year Experience" },
+        { "emoji": "🔌", "name": "API Development", "experience": "2 Years Experience" },
+        { "emoji": "🍃", "name": "MongoDB", "experience": "2 Years Experience" },
+        { "emoji": "🔴", "name": "Redis", "experience": "1 Year Experience" },
+        { "emoji": "☁️", "name": "Google Cloud Platform", "experience": "2 Years Experience" },
+        { "emoji": "🐳", "name": "Docker", "experience": "2 Years Experience" },
+        { "emoji": "🐧", "name": "Linux with SSH", "experience": "1 Year Experience" },
+        { "emoji": "📦", "name": "Git", "experience": "6 Years Experience" },
+        { "emoji": "🤖", "name": "TensorFlow/PyTorch", "experience": "3 Years Experience" }
+      ]
+    },
+    "contact": {
+      "heading": "Contact",
+      "intro": "Feel free to send me a message.",
+      "emailLabel": "Email",
+      "emailValue": "admlars2@gmail.com",
+      "discordLabel": "Discord",
+      "discordValue": "adum.__",
+      "socialLabel": "Social",
+      "socialLinks": [
+        { "name": "GitHub", "url": "https://github.com/admlars2" },
+        { "name": "LinkedIn", "url": "https://www.linkedin.com/in/adam-larson-097aa7259" }
+      ]
+    }
+  },
   "theme": {
     "toggle": "Toggle theme",
     "light": "Light",
@@ -116,6 +237,48 @@
       "table2022Title": "Valorant Champions 2022 Data",
       "body2": "The first thing that stood out to me was the fact that chamber was picked 115 times compared to the 15 times that he was picked in the most recent Championship. It makes sense considering how much they changed the character after seeing how strong he was, but it was still interesting to see. Another datapoint that I thought was interesting was how little Reyna was picked, even though the people who played her were extremely successful with her. In both tournaments, she had the highest ACS average. But that data does need to be taken with a grain of salt because she was picked 5 times in the most recent tournament and 2 times in the earlier tournament.",
       "conclusion": "Overall, this was a fun project, because I was able to learn how to get data from websites and I was able to actually see meta shifts from year to year in a better way than simply looking at the pickrate of agents."
+    },
+    "spaceshipTitanic": {
+      "title": "Spaceship Titanic - Kaggle Tabular ML Pipeline",
+      "summary": "Built a leakage-safe ML pipeline for the Spaceship Titanic Kaggle competition by using GroupKFold validation on passenger groups derived from PassengerId, while keeping a shared feature pipeline for train/test parity.",
+      "pipelineHeading": "Pipeline Design",
+      "pipelineBody1": "I focused on preventing leakage by splitting data with GroupKFold around passenger groups, which prevented passengers from the same group appearing in both training and validation folds.",
+      "pipelineBody2": "The project used a single, reproducible feature pipeline for both training and inference so transformations, encodings, and missing-value handling stayed consistent across all datasets.",
+      "featuresHeading": "Feature Engineering",
+      "feature1": "Parsed cabin values into deck/num/side signals and created derived cabin-consistency indicators.",
+      "feature2": "Added spending-behavior features from total and per-category usage, plus zero-spend and ratio-style indicators.",
+      "feature3": "Implemented group-aware imputations with explicit missingness flags to preserve useful uncertainty information.",
+      "modelsHeading": "Modeling Strategy",
+      "modelsBody1": "Trained and compared strong tabular baselines including CatBoost and HistGradientBoosting under the same grouped cross-validation protocol for fair evaluation.",
+      "modelsBody2": "Reviewed fold-level performance, inspected feature importance, and documented common error modes to guide further iteration.",
+      "resultsHeading": "Results",
+      "resultsBody": "Achieved a 0.804 public leaderboard score on Kaggle, ranking 627 at the time of submission.",
+      "reproHeading": "Reproducibility",
+      "reproBody": "Packaged the project as a reproducible repository using Poetry, scripted feature-pipeline steps, saved model artifacts, and generated feature-importance plots for interpretability."
+    },
+    "herbSearch": {
+      "title": "Herb Search - Text Adventure Game",
+      "intro1": "Herb Search is an interactive text-based adventure game built with React and TypeScript. You play as a character helping their grandma search for herbs in her house. The game features a terminal-style interface with command-based gameplay, creating an immersive retro computing experience.",
+      "projectFocusLabel": "Project focus:",
+      "projectFocusText": "build an immersive browser-based text adventure with a strong command parser, replayability, and maintainable frontend architecture.",
+      "gameplayHeading": "Gameplay & Design",
+      "gameplayBody1": "The game presents a nostalgic terminal-style interface where players interact with the world through text commands. You start by entering your name, then explore grandma's house, talk to characters, search for items, and solve puzzles. The game features a command parser that understands natural language commands like 'talk grandma', 'look around', 'go north', and more.",
+      "gameplayBody2": "The world is procedurally generated using Perlin noise, creating a unique map layout for each playthrough. Players can explore different rooms, interact with NPCs, manage an inventory system, and track their progress through various game statistics.",
+      "technicalHeading": "Technical Implementation",
+      "technicalBody1": "Built with React and TypeScript, the game uses a component-based architecture with custom hooks for keyboard sound effects and game state management. The terminal interface features a custom cursor that follows text input, creating an authentic command-line experience.",
+      "technicalBody2": "Game state is persisted using localStorage, allowing players to save their progress and resume their adventure later. The command handler system processes user input and routes commands to appropriate handlers, supporting both synchronous and asynchronous operations.",
+      "featuresHeading": "Key Features",
+      "feature1": "Command-based text adventure gameplay",
+      "feature2": "Procedurally generated world using Perlin noise",
+      "feature3": "Interactive NPCs with AI-powered dialogue (via backend API)",
+      "feature4": "Inventory management system",
+      "feature5": "Persistent game state with localStorage",
+      "feature6": "Terminal-style UI with custom cursor and keyboard sound effects",
+      "backendHeading": "Backend Integration",
+      "backendBody1": "The game integrates with a Python FastAPI backend for AI-powered NPC conversations. When players talk to characters like grandma, the backend uses language models to generate contextual and dynamic dialogue responses, making each conversation feel unique and natural.",
+      "backendBody2": "The backend is containerized with Docker and can be easily deployed. It handles conversation state management and provides a RESTful API for the frontend to interact with NPCs.",
+      "conclusion": "Herb Search combines nostalgic text adventure gameplay with modern web technologies, creating an engaging and interactive experience. The project demonstrates skills in React development, game design, API integration, and creating immersive user interfaces.",
+      "projectSummaryBadge": "Project Case Study"
     }
   }
 }

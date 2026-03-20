@@ -5,24 +5,10 @@ const ThemeSwitch = () => {
   const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === 'dark';
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLLabelElement>) => {
-    if (e.code === 'Space' || e.key === 'Enter') {
-      e.preventDefault();
-      toggleTheme();
-    }
-  };
-
-  const handleLabelClick = (e: React.MouseEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    toggleTheme();
-  };
-
   return (
     <label 
+      htmlFor="theme-toggle"
       className="relative inline-block w-14 h-7 transition-transform duration-300 ease-in-out hover:scale-110 focus-within:scale-110 focus-within:outline-none cursor-pointer"
-      tabIndex={0} 
-      onKeyDown={handleKeyDown}
-      onClick={handleLabelClick}
       aria-label="Toggle theme"
     >
       <input 
@@ -31,16 +17,14 @@ const ThemeSwitch = () => {
         type="checkbox" 
         checked={isDarkMode} 
         onChange={toggleTheme} 
-        onFocus={(e) => e.target.blur()}
-        tabIndex={-1}
-        readOnly
         className="sr-only"
         aria-label="Theme toggle checkbox"
       />
       <span className="absolute inset-0 cursor-pointer rounded-full overflow-hidden select-none transition-colors duration-300 ease-in-out will-change-[background-color] theme-switch-track">
         <img 
           src={sunmoon} 
-          alt="sunmoon" 
+          alt=""
+          aria-hidden="true"
           width="56"
           height="56"
           className={`absolute w-14 h-14 pointer-events-none z-10 transition-transform duration-300 ease-in-out will-change-transform ${
