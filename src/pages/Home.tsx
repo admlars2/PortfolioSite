@@ -6,6 +6,7 @@ import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
+import ResumePdf from '@/assets/resumes/AdamLarson_DataEngineer_Resume.pdf';
 import { HeroBackgroundModel } from '@/components/HeroModel';
 import HeroStarfieldOverlay from '@/components/effects/HeroStarfieldOverlay';
 
@@ -315,6 +316,16 @@ export default function Home() {
               <li>
                 <h3 className="text-xl font-semibold mb-2 text-primary">{t('home.contact.discordLabel')}</h3>
                 <span className="text-lg text-secondary">{t('home.contact.discordValue')}</span>
+              </li>
+              <li>
+                <h3 className="text-xl font-semibold mb-2 text-primary">Resume</h3>
+                <a
+                  href={ResumePdf}
+                  download="AdamLarson_DataEngineer_Resume.pdf"
+                  className="text-accent hover:underline text-lg transition-colors"
+                >
+                  Download Resume (PDF)
+                </a>
               </li>
               <li>
                 <h3 className="text-xl font-semibold mb-4 text-primary">{t('home.contact.socialLabel')}</h3>
