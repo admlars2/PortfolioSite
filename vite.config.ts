@@ -3,13 +3,11 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { cloudflare } from "@cloudflare/vite-plugin";
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), cloudflare()],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -24,9 +22,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // More aggressive code splitting
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
+            if (
+              id.includes('/react/') ||
+              id.includes('/react-dom/') ||
+              id.includes('/scheduler/') ||
+              id.includes('/use-sync-external-store/')
+            ) {
               return 'react-vendor';
             }
             if (id.includes('react-router')) {
@@ -35,7 +37,6 @@ export default defineConfig({
             if (id.includes('i18next')) {
               return 'i18n-vendor';
             }
-            // Split other large vendor chunks
             return 'vendor';
           }
         },

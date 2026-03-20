@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "npm run build && wrangler dev",
+    "preview": "vite preview",
     "lighthouse:desktop": "node scripts/lighthouse-test.js desktop",
     "lighthouse:mobile": "node scripts/lighthouse-test.js mobile",
     "lighthouse:all": "node scripts/lighthouse-test.js all",
