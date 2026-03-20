@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import { getProjectRoutes } from './utils/routeUtils';
 import './i18n/config';
 
+// Main App
 function AppContent() {
   const { t } = useTranslation();
   const projectRoutes = useMemo(() => 
