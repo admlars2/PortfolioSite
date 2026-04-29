@@ -18,9 +18,9 @@ function AppContent() {
   , []);
 
   return (
-    <div className="h-screen w-full max-w-full overflow-hidden bg-app text-primary transition-colors duration-300">
+    <div className="h-[100svh] w-full max-w-full overflow-hidden bg-app text-primary transition-colors duration-300">
       <Sidebar />
-      <main className="h-full w-full max-w-full transition-all duration-300 will-change-auto bg-app overflow-y-auto overflow-x-hidden">
+      <main className="app-scroll-container h-full w-full max-w-full transition-all duration-300 will-change-auto bg-app overflow-y-auto overflow-x-hidden">
         <Suspense fallback={<div className="flex items-center justify-center h-full">{t('common.loading')}</div>}>
           <Routes>
             <Route path="/" element={<Home />} />

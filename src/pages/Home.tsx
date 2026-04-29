@@ -6,6 +6,7 @@ import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
+import SpaceshipTitanicCoverImage from '@/assets/images/SpaceshipTitanic/cover.png';
 import ResumePdf from '@/assets/resumes/AdamLarson_DataEngineer_Resume.pdf';
 import { HeroBackgroundModel } from '@/components/HeroModel';
 import HeroStarfieldOverlay from '@/components/effects/HeroStarfieldOverlay';
@@ -61,6 +62,7 @@ const PROJECT_MEDIA_MAP: Record<string, Pick<Project, 'image' | 'imageAlt' | 'im
   'iot-simulator': { image: AzureIoTHubImage },
   'valorant-analysis': { image: ValorantStatsImage },
   'discord-bots': { image: DiscordTwitterImage, imageFit: 'contain' },
+  'spaceship-titanic': { image: SpaceshipTitanicCoverImage },
 };
 
 export default function Home() {
@@ -208,7 +210,7 @@ export default function Home() {
       {/* Home Section */}
       <section
         id="home"
-        className="min-h-screen px-4 py-12 hero-overlay relative overflow-hidden"
+        className="min-h-[100svh] px-4 py-12 hero-overlay relative overflow-hidden"
       >
         {/* Stars furthest back */}
         <HeroStarfieldOverlay className="z-0" />

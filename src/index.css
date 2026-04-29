@@ -119,6 +119,30 @@ body {
   background-color: var(--color-hero-overlay);
 }
 
+.app-scroll-container {
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Background canvases in the hero (R3F 3D model + starfield) sit behind the
+ * content. Their wrappers have pointer-events: none, but child canvases still
+ * receive pointer events by default — and R3F attaches wheel/pointer handlers
+ * that swallow mouse-wheel scrolling and prevent the section from scrolling
+ * the parent <main>. R3F/controls can also set touch-action: none, which
+ * blocks touchscreen scroll gestures that start on the canvas.
+ *
+ * Force both:
+ *   - pointer-events: none so wheel/click events pass through to <main>.
+ *   - touch-action: pan-y so vertical touch drags scroll the page normally.
+ */
+.hero-model-canvas,
+.hero-overlay canvas {
+  pointer-events: none !important;
+  touch-action: pan-y !important;
+}
+
 .hero-gradient-overlay {
   background: linear-gradient(
     to bottom right,

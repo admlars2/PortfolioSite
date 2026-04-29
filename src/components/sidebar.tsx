@@ -257,7 +257,7 @@ export default function Sidebar() {
       <div
         data-sidebar-trigger
         className={`fixed left-0 top-0 h-full z-50
-          w-10 sm:w-12 md:w-10 lg:w-16
+          w-6 sm:w-10 md:w-10 lg:w-16
           transition-opacity duration-300 ${
           isHovered ? 'opacity-0' : 'opacity-100'
         }`}
