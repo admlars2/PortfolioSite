@@ -7,6 +7,7 @@ import DiscordTwitterImage from '@/assets/images/DiscordTwitter.png';
 import KanjiTrainerFrontImage from '@/assets/images/KanjiTrainer/front.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
 import SpaceshipTitanicCoverImage from '@/assets/images/SpaceshipTitanic/cover.png';
+import LangLiftLibraryMockupImage from '@/assets/images/LangLift/library-cards-figma.svg';
 import ResumePdf from '@/assets/resumes/AdamLarson_DataEngineer_Resume.pdf';
 import { HeroBackgroundModel } from '@/components/HeroModel';
 import HeroStarfieldOverlay from '@/components/effects/HeroStarfieldOverlay';
@@ -57,6 +58,10 @@ const PROJECT_ORDER = [
   'discord-bots',
 ] as const;
 const PROJECT_MEDIA_MAP: Record<string, Pick<Project, 'image' | 'imageAlt' | 'imageFit'>> = {
+  'lang-lift': {
+    image: LangLiftLibraryMockupImage,
+    imageAlt: 'LangLift library cards Figma mockup',
+  },
   'kanji-trainer': { image: KanjiTrainerFrontImage },
   'tales-of-tiny': { image: TalesOfTinyImage },
   'iot-simulator': { image: AzureIoTHubImage },
