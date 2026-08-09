@@ -6,7 +6,7 @@ import TalesOfTinyImage from '@/assets/images/TalesOfTiny.png';
 import AzureIoTHubImage from '@/assets/images/AzureIoTHub.png';
 import SpaceshipTitanicCoverImage from '@/assets/images/SpaceshipTitanic/cover.png';
 import LangLiftLibraryMockupImage from '@/assets/images/LangLift/library-cards-figma.svg';
-import ResumePdf from '@/assets/resumes/AdamLarson_DataEngineer_Resume.pdf';
+import ResumePdf from '@/assets/resumes/Adam_Larson_Scientific_Software_Resume.pdf';
 import { HeroBackgroundModel } from '@/components/HeroModel';
 import HeroStarfieldOverlay from '@/components/effects/HeroStarfieldOverlay';
 
@@ -312,7 +312,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-primary">Resume</h3>
-                <a href={ResumePdf} download="AdamLarson_DataEngineer_Resume.pdf" className="mt-2 inline-block text-lg text-accent hover:underline">Download resume (PDF)</a>
+                <a href={ResumePdf} download="Adam_Larson_Scientific_Software_Resume.pdf" className="mt-2 inline-block text-lg text-accent hover:underline">Download resume (PDF)</a>
               </div>
             </div>
             <div className="mt-8 border-t border-default pt-6">
