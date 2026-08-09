@@ -40,6 +40,7 @@ export default function Sidebar() {
   const navSections = useMemo(() => ([
     { id: 'home', label: t('nav.home'), href: '/', hash: '' },
     { id: 'about', label: t('nav.about'), href: '/', hash: 'about' },
+    { id: 'experience', label: t('nav.experience'), href: '/', hash: 'experience' },
     { id: 'projects', label: t('nav.projects'), href: '/', hash: 'projects' },
     { id: 'skills', label: t('nav.skills'), href: '/', hash: 'skills' },
     { id: 'contact', label: t('nav.contact'), href: '/', hash: 'contact' },

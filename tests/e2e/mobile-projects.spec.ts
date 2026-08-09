@@ -23,6 +23,7 @@ const PROJECT_ROUTES = [
   '/kanji-trainer-for-raspberry-pi',
   '/lang-lift',
   '/spaceship-titanic-kaggle-tabular-ml-pipeline',
+  '/tectonic-planet-generator',
   '/valorant-agent-data-analysis',
 ];
 

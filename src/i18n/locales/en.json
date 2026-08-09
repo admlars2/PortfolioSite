@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
+    "experience": "Experience",
     "projects": "Projects",
     "skills": "Skills",
     "contact": "Contact"
@@ -11,12 +12,12 @@
   },
   "home": {
     "hero": {
-      "title": "Home",
-      "subtitle": "Welcome to my portfolio"
+      "title": "Software for physical systems.",
+      "subtitle": "Simulation, data tools, and precision measurement for Earth science and other physical systems."
     },
     "about": {
-      "heading": "Career Objective",
-      "body": "I am a Computer Science student looking to pursue an opportunity in the field of software engineering. Utilizing my strong foundation in building software and writing algorithms, I aim to gain practical experience and collaborate with professionals in the industry. I am excited to explore my passion for technology in real-world scenarios."
+      "heading": "Software, data, and the physical world",
+      "body": "I am a computer science graduate interested in applying software, data analysis, and simulation to Earth science and other physical systems."
     },
     "projects": {
       "heading": "Projects",
@@ -40,8 +41,8 @@
         },
         {
           "id": "tales-of-tiny",
-          "title": "Lead Game Developer - \"Tales of Tiny\" Puzzle Game",
-          "description": "Led brainstorming sessions and combined key ideas into a fun, exciting puzzle game. Used Unity's game engine to develop mechanics and controls, designed challenging puzzles, and coordinated with the team to deliver a polished game within our deadline.",
+          "title": "Tales of Tiny — Collaborative Unity Puzzle Game",
+          "description": "A finished puzzle game made by a six-person team in six weeks. My primary responsibility was level design, and I also contributed an HLSL-based blacklight effect.",
           "route": "/game-development",
           "imageAlt": "Tales of Tiny",
           "imagePosition": "left"
@@ -49,7 +50,7 @@
         {
           "id": "iot-simulator",
           "title": "IoT Sensor Simulator with Azure IoT Hub",
-          "description": "Collaborated with a cross-functional team to design a robust IoT sensor simulation system for real-time monitoring. Developed Python scripts to generate and send simulated sensor data using MQTT protocol and integrated with Azure IoT Hub.",
+          "description": "Developed Python scripts that generated sensor readings and sent JSON messages through MQTT to Azure IoT Hub as part of a team-built monitoring system.",
           "route": "/iot-sensor-simulator-with-azure-iot-hub",
           "imageAlt": "IoT Sensor Simulator with Azure IoT Hub",
           "imagePosition": "left"
@@ -91,26 +92,14 @@
     },
     "skills": {
       "heading": "Skills",
-      "intro": "I have been working with Computer Programming for more than 8 years now. Here are a few of the skills that I have acquired.",
+      "intro": "Skills grounded in projects, coursework, and current precision-inspection work.",
       "items": [
-        { "emoji": "🐍", "name": "Python", "experience": "10 Years Experience" },
-        { "emoji": "☕", "name": "Java", "experience": "6 Years Experience" },
-        { "emoji": "⚙️", "name": "C++", "experience": "2 Years Experience" },
-        { "emoji": "🎮", "name": "C# & HLSL", "experience": "3 Years Experience" },
-        { "emoji": "🎯", "name": "Unity", "experience": "3 Years Experience" },
-        { "emoji": "🔷", "name": "Object Oriented Programming", "experience": "10 Years Experience" },
-        { "emoji": "🧠", "name": "System Design", "experience": "2 Years Experience" },
-        { "emoji": "🌐", "name": "Web Development", "experience": "2 Years Experience" },
-        { "emoji": "📘", "name": "TypeScript", "experience": "2 Years Experience" },
-        { "emoji": "🟨", "name": "JavaScript", "experience": "1 Year Experience" },
-        { "emoji": "🔌", "name": "API Development", "experience": "2 Years Experience" },
-        { "emoji": "🍃", "name": "MongoDB", "experience": "2 Years Experience" },
-        { "emoji": "🔴", "name": "Redis", "experience": "1 Year Experience" },
-        { "emoji": "☁️", "name": "Google Cloud Platform", "experience": "2 Years Experience" },
-        { "emoji": "🐳", "name": "Docker", "experience": "2 Years Experience" },
-        { "emoji": "🐧", "name": "Linux with SSH", "experience": "1 Year Experience" },
-        { "emoji": "📦", "name": "Git", "experience": "6 Years Experience" },
-        { "emoji": "🤖", "name": "TensorFlow/PyTorch", "experience": "3 Years Experience" }
+        { "emoji": "", "name": "Scientific and data work", "experience": "Python, OpenPyXL, data analysis, deterministic pipelines, regression testing" },
+        { "emoji": "", "name": "Software engineering", "experience": "TypeScript, React, Git, API development, C++, C#, testing" },
+        { "emoji": "", "name": "Visualization and simulation", "experience": "WebGL, Three.js, procedural modeling, Unity, HLSL" },
+        { "emoji": "", "name": "Measurement and physical systems", "experience": "Metrology, blueprint reading, CMM Manager, precision measurement" },
+        { "emoji": "", "name": "Tools and platforms", "experience": "FastAPI, MQTT, Azure IoT Hub, MongoDB, Redis, Linux, Docker" },
+        { "emoji": "", "name": "Earth-science interests", "experience": "Tectonics, geodesy, seismology, geological modeling, Earth and geospatial data" }
       ]
     },
     "contact": {
@@ -219,14 +208,14 @@
     },
     "iotSimulator": {
       "title": "IoT Sensor Simulator with Azure IoT Hub",
-      "intro": "Collaborated with a cross-functional team to design a robust IoT sensor simulation system for real-time monitoring. This project involved creating a comprehensive system that could simulate various sensor types and integrate seamlessly with Azure IoT Hub for cloud-based data management and visualization.",
+      "intro": "Worked with a team on an IoT sensor simulator that sent generated readings to Azure IoT Hub for monitoring and visualization.",
       "devHeading": "Development & Implementation",
-      "devBody": "I developed Python scripts to generate and send simulated sensor data (e.g., temperature, humidity) in JSON format using the MQTT protocol. The MQTT protocol was chosen for its lightweight nature and efficient message delivery, making it ideal for IoT applications. The scripts were designed to generate realistic sensor readings that could be used for testing and development purposes.",
+      "devBody": "I developed Python scripts that generated temperature and humidity readings, encoded them as JSON, and sent them through MQTT. This supplied repeatable input for testing the cloud-side data path without requiring physical sensors.",
       "teamHeading": "Team Collaboration",
-      "teamBody": "Working closely with team members, I helped define the system architecture and establish communication protocols. We designed a scalable system that could handle multiple sensor types and data streams simultaneously. The integration with Azure IoT Hub was crucial for cloud-based data storage and management.",
+      "teamBody": "The team divided work across data generation, cloud integration, alerts, and visualization. I contributed to the simulator and the MQTT connection to Azure IoT Hub, then worked with the other components through the agreed JSON message format.",
       "featuresHeading": "Features & Integration",
-      "featuresBody": "I contributed to the overall project by ensuring reliable data transmission between the simulator and Azure IoT Hub. Additionally, I assisted with implementing threshold-based alerts that would trigger notifications when sensor readings exceeded predefined limits. The system also included dashboard integration for real-time visualization, allowing users to monitor sensor data as it was being generated.",
-      "conclusion": "This project provided valuable experience in cloud computing, IoT protocols, and team collaboration. It demonstrated the importance of designing scalable systems and integrating multiple technologies to create a comprehensive solution for real-time monitoring and data management."
+      "featuresBody": "The completed workflow sent simulated readings to Azure IoT Hub, exposed them in a monitoring dashboard, and supported threshold-based alerts. My work centered on producing and transmitting the sensor messages used by that workflow.",
+      "conclusion": "The project was a practical introduction to MQTT, cloud-connected data flows, and coordinating interfaces across a team-built system."
     },
     "valorantAnalysis": {
       "title": "Data Analysis",

@@ -70,7 +70,7 @@ test.describe('Mobile Home page', () => {
   test('all main sections render', async ({ page }) => {
     await gotoHome(page);
 
-    for (const id of ['home', 'about', 'projects', 'skills', 'contact']) {
+    for (const id of ['home', 'about', 'experience', 'projects', 'skills', 'contact']) {
       await expect(page.locator(`#${id}`)).toHaveCount(1);
     }
   });
@@ -264,7 +264,7 @@ test.describe('Mobile Home page', () => {
 
     // Nav buttons inside should be reachable.
     const navButtons = aside.locator('nav button');
-    expect(await navButtons.count()).toBeGreaterThanOrEqual(5);
+    expect(await navButtons.count()).toBeGreaterThanOrEqual(6);
   });
 
   test('sidebar nav buttons have a tappable hit area', async ({ page, hasTouch }) => {
