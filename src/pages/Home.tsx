@@ -218,7 +218,7 @@ export default function Home() {
             </div>
             <ul className="mt-6 space-y-3 text-lg leading-relaxed text-secondary">
               <li>Inspect precision-machined components with micrometers, calipers, bore micrometers, pin gauges, CMM Manager, and coordinate-measuring equipment.</li>
-              <li>Read engineering drawings and work with tolerances commonly measured in thousandths and, at times, ten-thousandths of an inch while learning blueprint interpretation and CMM operation.</li>
+              <li>Read engineering drawings and verify dimensions against tolerances regularly specified in thousandths and ten-thousandths of an inch while learning blueprint interpretation and CMM operation.</li>
               <li>Developing an internal Python/OpenPyXL tool for inspection-data aggregation.</li>
             </ul>
           </article>
